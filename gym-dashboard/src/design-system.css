@@ -1,0 +1,218 @@
+/* ===== BLUE DARK GYM MANAGEMENT UI - DESIGN SYSTEM ===== */
+
+/**
+ * This file serves as a comprehensive reference for the Blue Dark design system.
+ * All styles are applied through Tailwind CSS in index.css and App.css
+ * This file documents the design tokens and usage patterns.
+ */
+
+/* ===== COLOR PALETTE ===== */
+/*
+  Navy (Background): #00296B
+  Primary Blue (Cards / Buttons): #003F88
+  Secondary Blue (Panels): #00509D
+  Gold (CTA): #FDC500
+  Bright Yellow (Hover): #FFD500
+  
+  Success: #22C55E
+  Warning: #FDC500
+  Error: #EF4444
+  Info: #3B82F6
+*/
+
+/* ===== TYPOGRAPHY ===== */
+/*
+  Font Family: Montserrat (400, 500, 600, 700, 800)
+  
+  Headings: Lexend Display
+  Body: Montserrat
+  
+  Text Hierarchy:
+  - Primary Text (#FFFFFF): Headings, key values
+  - Secondary Text (rgba(255,255,255,0.8)): Labels, descriptions
+  - Muted Text (rgba(255,255,255,0.6)): Meta info, timestamps
+*/
+
+/* ===== CARD COMPONENT STRUCTURE ===== */
+/*
+  .gym-card
+    ├── ::before (Gold top border)
+    ├── .card-icon (Optional)
+    ├── .card-title (Secondary text)
+    ├── .card-value (Primary text - large)
+    ├── .card-meta (Muted text)
+    └── Chart/Progress (Optional)
+  
+  Custom Classes:
+  - .gym-card: Card container with gold top border
+  - .card-title: 14px, secondary text color
+  - .card-value: 28px, bold, primary text
+  - .card-meta: 12px, muted text color
+  - .card-icon: Icon container with translucent white bg
+*/
+
+/* ===== BUTTON VARIANTS ===== */
+/*
+  Primary Button:
+  - Background: #FDC500
+  - Text: #00296B (navy)
+  - Hover: #FFD500
+  - Usage: CTAs, main actions
+  
+  Secondary Button:
+  - Background: #00509D (secondary blue)
+  - Text: #FFFFFF
+  - Border: #003F88
+  - Hover: #003F88
+  - Usage: Alternative actions
+  
+  Classes: .btn-primary, .btn-secondary, .primary-btn, .secondary-btn
+*/
+
+/* ===== STATUS INDICATORS ===== */
+/*
+  Success Badge: .badge-success
+  - Background: #22C55E with 20% opacity
+  
+  Warning Badge: .badge-warning
+  - Background: #FDC500 with 20% opacity
+  
+  Error Badge: .badge-error
+  - Background: #EF4444 with 20% opacity
+  
+  Info Badge: .badge-info
+  - Background: #3B82F6 with 20% opacity
+*/
+
+/* ===== LAYOUT UTILITIES ===== */
+/*
+  Dashboard Grid:
+  - 1 col (mobile)
+  - 2 cols (tablet)
+  - 4 cols (desktop)
+  - Class: .dashboard-grid
+  
+  3-Column Grid:
+  - 1 col (mobile)
+  - 2 cols (tablet)
+  - 3 cols (desktop)
+  - Class: .dashboard-grid-3
+  
+  Gap: 1.25rem (20px)
+*/
+
+/* ===== EFFECTS ===== */
+/*
+  Hover Lift:
+  - Transform: translateY(-5px)
+  - Duration: 300ms
+  - Easing: ease-out
+  
+  Shadow:
+  - Box Shadow: 0 10px 40px rgba(0, 0, 0, 0.5)
+  
+  Glass Effect (Optional):
+  - Background: rgba(0, 63, 136, 0.7)
+  - Backdrop Filter: blur(10px)
+  - Class: .glass-effect
+*/
+
+/* ===== INPUT FIELDS ===== */
+/*
+  Input Field: .input-field
+  - Background: #00509D with 50% opacity
+  - Border: 1px #003F88
+  - Text: #FFFFFF
+  - Placeholder: rgba(255,255,255,0.6)
+  - Focus: Ring 2px gold
+  - Border Radius: 0.5rem
+*/
+
+/* ===== SPACING SYSTEM ===== */
+/*
+  Padding: 1.25rem (20px) for cards
+  Gap: 1.25rem (20px) for grids
+  Rounded: 1rem (16px) for cards, 0.625rem (10px) for smaller elements
+*/
+
+/* ===== TEXT COLORS ===== */
+/*
+  .text-primary: Full white (#FFFFFF)
+  .text-secondary: 80% opacity white
+  .text-muted: 60% opacity white
+  
+  Example usage with Tailwind:
+  <p class="text-secondary">Secondary text</p>
+  <p class="text-muted">Muted text</p>
+*/
+
+/* ===== DIVIDER COMPONENT ===== */
+/*
+  Divider: .gym-divider or .divider
+  - Height: 1px
+  - Background: rgba(255,255,255,0.1)
+  - Creates subtle visual separation
+*/
+
+/* ===== COMPONENT USAGE EXAMPLES ===== */
+
+/*
+  Card Example:
+  <div class="gym-card">
+    <div class="card-icon">📊</div>
+    <h3 class="card-title">Total Revenue</h3>
+    <div class="card-value">$45,231</div>
+    <p class="card-meta">+12% from last week</p>
+  </div>
+
+  Primary Button Example:
+  <button class="btn-primary">Complete Action</button>
+  
+  Dashboard Grid Example:
+  <div class="dashboard-grid">
+    <div class="gym-card">...</div>
+    <div class="gym-card">...</div>
+    <div class="gym-card">...</div>
+    <div class="gym-card">...</div>
+  </div>
+
+  Input Example:
+  <input type="text" class="input-field" placeholder="Enter member name">
+  
+  Status Badge Example:
+  <span class="badge-success">Active</span>
+  <span class="badge-warning">Pending</span>
+  <span class="badge-error">Inactive</span>
+  <span class="badge-info">Info</span>
+*/
+
+/* ===== DESIGN PRINCIPLES ===== */
+/*
+  1. Use blue for structure and hierarchy
+  2. Use gold ONLY for calls-to-action and interactive elements
+  3. Maintain high contrast text (white on dark blue)
+  4. Keep UI minimal and card-based
+  5. Avoid overuse of accent colors
+  6. Consistent spacing and alignment
+  7. Smooth transitions and hover states
+  8. Responsive design-first approach
+*/
+
+/* ===== TAILWIND CONFIGURATION ===== */
+/*
+  Colors available in tailwind.config.js:
+  - navy: #00296B
+  - primary-blue: #003F88
+  - secondary-blue: #00509D
+  - gold: #FDC500
+  - gold-bright: #FFD500
+  - success: #22C55E
+  - warning: #FDC500
+  - error: #EF4444
+  - info: #3B82F6
+  
+  Font Families:
+  - sans: Montserrat (default)
+  - montserrat: Montserrat
+  - display: Lexend
+*/

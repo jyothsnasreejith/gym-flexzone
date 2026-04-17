@@ -1,0 +1,16 @@
+{
+  "rewrites": [
+    {
+      "source": "/supabase-api/:path*",
+      "destination": "https://qjkvvbuububgqgljsyjb.supabase.co/:path*"
+    },
+    {
+      "source": "/api/:path*",
+      "destination": "http://localhost:5000/api/:path*"
+    },
+    {
+      "source": "/((?!api|supabase-api).*)",
+      "destination": "/index.html"
+    }
+  ]
+}

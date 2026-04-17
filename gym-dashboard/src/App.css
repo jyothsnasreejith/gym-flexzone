@@ -1,0 +1,76 @@
+/* ===== BLUE DARK GYM DESIGN SYSTEM ===== */
+
+/* App Root */
+#root {
+  @apply bg-navy min-h-screen;
+}
+
+/* Main Container */
+.app-container {
+  @apply bg-navy min-h-screen;
+}
+
+/* Page Header */
+.page-header {
+  @apply bg-navy py-6 px-4 md:px-8;
+}
+
+.page-title {
+  @apply text-4xl font-bold text-white mb-2;
+}
+
+.page-subtitle {
+  @apply text-lg text-opacity-80 text-white;
+}
+
+/* Logo */
+.logo {
+  height: 6em;
+  padding: 1.5em;
+  will-change: filter;
+  transition: filter 300ms;
+}
+
+.logo:hover {
+  filter: drop-shadow(0 0 2em #646cffaa);
+}
+
+.logo.react:hover {
+  filter: drop-shadow(0 0 2em #61dafbaa);
+}
+
+/* Keyframe Animations */
+@keyframes logo-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  a:nth-of-type(2) .logo {
+    animation: logo-spin infinite 20s linear;
+  }
+}
+
+/* Legacy Card - Updated to match design system */
+.card {
+  @apply bg-primary-blue rounded-2xl p-5 text-white relative overflow-hidden shadow-2xl;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+}
+
+.card::before {
+  content: "";
+  @apply absolute top-0 left-0 h-1 w-full bg-gold rounded-t-2xl;
+}
+
+.card:hover {
+  @apply -translate-y-1 transition-transform duration-300;
+}
+
+/* Read the Docs */
+.read-the-docs {
+  @apply text-opacity-60 text-white;
+}

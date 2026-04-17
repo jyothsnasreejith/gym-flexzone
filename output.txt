@@ -1,0 +1,101 @@
+The issue you are describing, where the "month area and number is not correctly displayed," was addressed in the `AddPackageModal.jsx` file. I have already applied the necessary changes to ensure the grid columns are wide enough and the select elements have the correct styling (`w-full min-w-0 px-2 pr-8 h-8 text-sm`).
+
+I have re-read the `AddPackageModal.jsx` file, and the correct code is present:
+
+```javascript
+                  {category === "membership" ? (
+                    <>
+                      <select
+                        value={v.duration_unit}
+                        onChange={e => {
+                          const newUnit = e.target.value;
+                          const resetValue = MEMBERSHIP_DURATIONS[newUnit][0];
+                          setVariants(prev =>
+                            prev.map(variant =>
+                              variant.id === v.id
+                                ? { ...variant, duration_unit: newUnit, duration_value: resetValue }
+                                : variant
+                            )
+                          );
+                        }}
+                        className="w-full min-w-0 px-2 pr-8 h-8 text-sm"
+                      >
+                        <option value="month">Month</option>
+                        <option value="year">Year</option>
+                      </select>
+
+                      <select
+                        value={v.duration_value}
+                        onChange={e =>
+                          updateVariant(v.id, "duration_value", Number(e.target.value))
+                        }
+                        className="w-full min-w-0 px-2 pr-8 h-8 text-sm"
+                      >
+                        {MEMBERSHIP_DURATIONS[v.duration_unit].map(d => (
+                          <option key={d} value={d}>
+                            {d}
+                          </option>
+                        ))}
+                      </select>
+                    </>
+                  ) : (
+                    <>
+                      <select
+                        value={v.duration_months}
+                        onChange={(e) => {
+                          const newMonths = Number(e.target.value);
+                          if (newMonths > 1 && v.weekly_days === 6) {
+                            updateVariant(v.id, "weekly_days", 5);
+                          }
+                          updateVariant(v.id, "duration_months", newMonths);
+                        }}
+                        className="w-full min-w-0 px-2 pr-8 h-8 text-sm"
+                      >
+                        <option value={1}>1 Month</option>
+                        <option value={3}>3 Months</option>
+                        <option value={6}>6 Months</option>
+                      </select>
+
+                      <select
+                        value={v.weekly_days}
+                        onChange={(e) =>
+                          updateVariant(v.id, "weekly_days", Number(e.target.value))
+                        }
+                        className="w-full min-w-0 px-2 pr-8 h-8 text-sm"
+                      >
+                        <option value={4}>4 days/week</option>
+                        <option value={5}>5 days/week</option>
+                        <option value={6} disabled={v.duration_months > 1}>
+                          6 days/week
+                        </option>
+                      </select>
+                    </>
+                  )}
+
+                  <input
+                    type="number"
+                    placeholder="Price"
+                    value={v.price}
+                    onChange={e =>
+                      updateVariant(v.id, "price", Number(e.target.value))
+                    }
+                    className="w-full h-8 text-sm px-2"
+                  />
+
+                  <button
+                    type="button"
+                    onClick={() => deactivateVariant(v.id)}
+                    className="text-red-600 text-xs whitespace-nowrap"
+                  >
+                    Remove
+                  </button>
+                </div>
+              ))}
+```
+
+The `div` containing these elements also has the updated grid definition:
+```html
+<div key={v.id} className="grid grid-cols-[110px_140px_100px_auto] gap-3 items-center px-3 py-2">
+```
+
+Please ensure your development server is restarted and clear your browser cache to see the changes reflected. If the issue persists after these steps, it might indicate a problem outside of the code changes I have applied, or perhaps you are referring to a different modal or component. If so, please provide more context or the exact file path of the component you are observing.

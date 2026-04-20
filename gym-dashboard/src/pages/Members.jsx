@@ -6,6 +6,7 @@ import { formatBatch } from "../utils/style";
 import { generateInvoice } from "../utils/generateInvoice";
 import { shareInvoice } from "../utils/communicationHelpers";
 import AssignPackageAndAddOnsModal from "../modals/AssignPackageAndAddOnsModal";
+import ProfilePhotoModal from "../modals/ProfilePhotoModal";
 import { useModal } from "../context/ModalContext";
 import { isCountable } from "../utils/paymentStatus";
 
@@ -138,6 +139,7 @@ export default function Members() {
   const [showAllPayments, setShowAllPayments] = useState(false);
   const [showContactMenu, setShowContactMenu] = useState(false);
   const [showAssignModal, setShowAssignModal] = useState(false);
+  const [showPhotoModal, setShowPhotoModal] = useState(false);
 
   /* =========================
      FETCH DATA
@@ -447,11 +449,8 @@ export default function Members() {
   if (loading) return <div className="p-6">Loading…</div>;
   if (!member) return <div className="p-6">Member not found</div>;
 
-  const isActive = member.status?.toLowerCase() === "active";
+  // Compute isExpired first
   const joinedOn = member.joining_date || member.created_at;
-  const profileImage = member.profile_image_url
-    ? `${member.profile_image_url}?t=${Date.now()}`
-    : null;
   const derivedExpiry = computeExpiryDate(member, packageHistory);
   // Always use derivedExpiry (calculated from joining_date), not stored values
   const packageExpiry = derivedExpiry || member.end_date || null;
@@ -462,16 +461,6 @@ export default function Members() {
     ? (packageExpiry > maxAddOnExpiry ? packageExpiry : maxAddOnExpiry)
     : (packageExpiry || maxAddOnExpiry);
 
-  const validTill = finalExpiry 
-    ? formatDate(finalExpiry) 
-    : (member?.package_variants ? "No expiry" : "—");
-  const packageExpiryDate = finalExpiry;
-  const packageExpiringSoon = isWithinOrPastDays(packageExpiryDate, 2);
-  const addOnExpiringSoon = memberAddOns.some((row) =>
-    isWithinOrPastDays(row?.end_date, 2)
-  );
-  const showRenewButton = packageExpiringSoon || addOnExpiringSoon;
-
   // Determine if actually expired (past today, not just expiring soon)
   const isExpired = (() => {
     if (!finalExpiry) return false;
@@ -481,6 +470,24 @@ export default function Members() {
     today.setHours(0, 0, 0, 0);
     return expDate < today;
   })();
+
+  // Make isActive dynamic based on expiry status, not static member.status
+  const isActive = !isExpired && member.status?.toLowerCase() === "active" && finalExpiry !== null;
+  
+  const profileImage = member.profile_image_url
+    ? `${member.profile_image_url}?t=${Date.now()}`
+    : null;
+    
+  const validTill = finalExpiry 
+    ? formatDate(finalExpiry) 
+    : (member?.package_variants ? "No expiry" : "—");
+  const packageExpiryDate = finalExpiry;
+  const packageExpiringSoon = isWithinOrPastDays(packageExpiryDate, 2);
+  const addOnExpiringSoon = memberAddOns.some((row) =>
+    isWithinOrPastDays(row?.end_date, 2)
+  );
+  const showRenewButton = packageExpiringSoon || addOnExpiringSoon;
+  
   const addOnSummary = memberAddOns
     .map((row) => row.add_ons?.name)
     .filter(Boolean)
@@ -848,6 +855,29 @@ export default function Members() {
           {/* LEFT COLUMN - Contact & Membership */}
           <div className="col-span-12 lg:col-span-4 space-y-6">
             
+            {/* Profile Photo Card */}
+            {profileImage && (
+              <div className="bg-primary-blue p-8 rounded-xl shadow-lg">
+                <h2 className="text-sm font-bold uppercase tracking-widest text-secondary mb-6">Profile Photo</h2>
+                <div className="relative group">
+                  <img
+                    src={profileImage}
+                    alt={member.full_name}
+                    className="w-full h-64 object-cover rounded-lg shadow-lg"
+                  />
+                  <button
+                    onClick={() => setShowPhotoModal(true)}
+                    className="absolute inset-0 bg-black/0 group-hover:bg-black/40 rounded-lg flex items-center justify-center transition-all duration-200"
+                  >
+                    <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex flex-col items-center gap-2">
+                      <span className="material-symbols-outlined text-4xl text-gold">zoom_in</span>
+                      <span className="text-white font-semibold text-sm">View Full Photo</span>
+                    </div>
+                  </button>
+                </div>
+              </div>
+            )}
+            
             {/* Contact Card */}
             <div className="bg-primary-blue p-8 rounded-xl shadow-lg">
               <h2 className="text-sm font-bold uppercase tracking-widest text-secondary mb-6">Contact Information</h2>
@@ -998,6 +1028,15 @@ export default function Members() {
             onClose={() => setShowAssignModal(false)}
             memberId={id}
             onSuccess={loadMember}
+          />
+        )}
+        
+        {profileImage && (
+          <ProfilePhotoModal
+            isOpen={showPhotoModal}
+            onClose={() => setShowPhotoModal(false)}
+            photoUrl={profileImage}
+            memberName={member.full_name}
           />
         )}
         </div>

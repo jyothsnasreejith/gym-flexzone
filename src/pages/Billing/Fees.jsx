@@ -971,7 +971,7 @@ export default function Fees() {
               value={memberQuery}
               onChange={(e) => setMemberQuery(e.target.value)}
               placeholder="Search by name"
-              className="mt-3 w-full rounded-md border px-3 py-2 text-sm"
+              className="mt-3 w-full rounded-md border px-3 py-2 text-sm text-black"
             />
           </div>
 

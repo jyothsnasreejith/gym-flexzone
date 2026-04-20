@@ -1781,13 +1781,13 @@ export default function MemberForm({
                 {packageHistory.map((p) => (
                   <div
                     key={p.id}
-                    className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 text-sm text-gray-700 bg-gray-50 px-3 py-2 rounded-md border border-gray-200"
+                    className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 text-sm text-white bg-card px-3 py-2 rounded-md border border-slate-700/20"
                   >
-                    <span className="font-medium text-gray-900">
+                    <span className="font-medium text-white">
                       {p.packages?.title || "—"}
                     </span>
 
-                    <span className="text-xs text-gray-600 sm:text-sm">
+                    <span className="text-xs text-white sm:text-sm">
                       {p.start_date}
                       {" → "}
                       {p.end_date || "Present"}

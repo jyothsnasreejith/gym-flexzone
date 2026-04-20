@@ -1602,7 +1602,7 @@ export default function MemberForm({
           {MEDICAL_OPTIONS.map((issue) => (
             <label
               key={issue}
-              className="flex items-center gap-2 text-sm text-gray-700"
+              className="flex items-center gap-2 text-sm text-white"
             >
               <input
                 type="checkbox"
@@ -1615,7 +1615,7 @@ export default function MemberForm({
           ))}
 
           {/* OTHER OPTION */}
-          <label className="flex items-center gap-2 text-sm text-gray-700">
+          <label className="flex items-center gap-2 text-sm text-white">
             <input
               type="checkbox"
               checked={medicalIssues.includes("Other")}
@@ -2189,7 +2189,7 @@ export default function MemberForm({
                           {MEDICAL_OPTIONS.map((issue) => (
                             <label
                               key={issue}
-                              className="flex items-center gap-2 text-sm text-gray-700"
+                              className="flex items-center gap-2 text-sm text-white"
                             >
                               <input
                                 type="checkbox"
@@ -2202,7 +2202,7 @@ export default function MemberForm({
                               {issue}
                             </label>
                           ))}
-                          <label className="flex items-center gap-2 text-sm text-gray-700">
+                          <label className="flex items-center gap-2 text-sm text-white">
                             <input
                               type="checkbox"
                               checked={depMedicalIssues.includes("Other")}

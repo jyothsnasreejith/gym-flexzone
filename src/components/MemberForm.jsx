@@ -1608,7 +1608,7 @@ export default function MemberForm({
                 type="checkbox"
                 checked={medicalIssues.includes(issue)}
                 onChange={() => toggleMedicalIssue(issue)}
-                className="rounded border-gray-300 text-primary focus:ring-primary"
+                className="rounded border-gray-300 accent-black focus:ring-primary"
               />
               {issue}
             </label>
@@ -1620,7 +1620,7 @@ export default function MemberForm({
               type="checkbox"
               checked={medicalIssues.includes("Other")}
               onChange={() => toggleMedicalIssue("Other")}
-              className="rounded border-gray-300 text-primary focus:ring-primary"
+              className="rounded border-gray-300 accent-black focus:ring-primary"
             />
             Other
           </label>
@@ -2197,7 +2197,7 @@ export default function MemberForm({
                                 onChange={() =>
                                   toggleDependentMedicalIssue(dep.id, issue)
                                 }
-                                className="rounded border-gray-300 text-primary focus:ring-primary"
+                                className="rounded border-gray-300 accent-black focus:ring-primary"
                               />
                               {issue}
                             </label>
@@ -2209,7 +2209,7 @@ export default function MemberForm({
                               onChange={() =>
                                 toggleDependentMedicalIssue(dep.id, "Other")
                               }
-                              className="rounded border-gray-300 text-primary focus:ring-primary"
+                              className="rounded border-gray-300 accent-black focus:ring-primary"
                             />
                             Other
                           </label>

@@ -6,7 +6,7 @@
         type="date"
         value={range.from}
         onChange={(e) => onChange({ ...range, from: e.target.value })}
-        className="w-full rounded-md border px-2 py-1 text-xs text-gray-700"
+        className="w-full rounded-md border px-2 py-1 text-xs text-black"
         disabled={disabled}
       />
     </label>
@@ -16,7 +16,7 @@
         type="date"
         value={range.to}
         onChange={(e) => onChange({ ...range, to: e.target.value })}
-        className="w-full rounded-md border px-2 py-1 text-xs text-gray-700"
+        className="w-full rounded-md border px-2 py-1 text-xs text-black"
         disabled={disabled}
       />
     </label>

@@ -158,7 +158,7 @@ export default function Login() {
             </span>
           </div>
 
-          <h1 className="text-2xl font-bold mb-2 text-[#111418]">
+          <h1 className="text-2xl font-bold mb-2 text-black">
             Welcome 
           </h1>
 
@@ -187,7 +187,7 @@ export default function Login() {
           >
             {/* EMAIL */}
             <div>
-              <label className="block mb-2 font-medium text-[#111418]">
+              <label className="block mb-2 font-medium text-black">
                 Email Address
               </label>
               <div className="relative">
@@ -196,7 +196,7 @@ export default function Login() {
                   placeholder="name@example.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full h-14 rounded-lg border border-[#dce0e5] bg-[#f8f9fa] px-4 pr-12 focus:ring-2 focus:ring-primary"
+                  className="w-full h-14 rounded-lg border border-[#dce0e5] bg-[#f8f9fa] px-4 pr-12 focus:ring-2 focus:ring-primary text-black"
                 />
                 <span className="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-[#637588]">
                   mail
@@ -207,7 +207,7 @@ export default function Login() {
             {/* PASSWORD */}
             <div>
               <div className="flex justify-between mb-2">
-                <label className="font-medium text-[#111418]">
+                <label className="font-medium text-black">
                   Password
                 </label>
               </div>
@@ -217,7 +217,7 @@ export default function Login() {
                   placeholder="Enter your password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full h-14 rounded-lg border border-[#dce0e5] bg-[#f8f9fa] px-4 pr-12 focus:ring-2 focus:ring-primary"
+                  className="w-full h-14 rounded-lg border border-[#dce0e5] bg-[#f8f9fa] px-4 pr-12 focus:ring-2 focus:ring-primary text-black"
                 />
                 <button
                   type="button"

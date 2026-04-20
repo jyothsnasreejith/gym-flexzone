@@ -1876,7 +1876,7 @@ export default function MemberForm({
                               value={dates.end_date || ""}
                               readOnly
                               disabled
-                              className="w-full h-9 border rounded-lg px-2 text-sm bg-gray-50 text-gray-500 cursor-not-allowed"
+                              className="w-full h-9 border rounded-lg px-2 text-sm bg-gray-50 text-black cursor-not-allowed"
                             />
                           </div>
                         </div>

@@ -1841,7 +1841,7 @@ export default function MemberForm({
                       {checked && (
                         <div className="px-3 py-2 bg-card border-t grid grid-cols-1 sm:grid-cols-2 gap-3">
                           <div>
-                            <label className="text-xs text-gray-500 block mb-1">Membership Start Date</label>
+                            <label className="text-xs text-white block mb-1">Membership Start Date</label>
                             <input
                               type="date"
                               value={dates.start_date || ""}
@@ -1870,7 +1870,7 @@ export default function MemberForm({
                             />
                           </div>
                           <div>
-                            <label className="text-xs text-gray-500 block mb-1">Expiry Date (auto-calculated)</label>
+                            <label className="text-xs text-white block mb-1">Expiry Date (auto-calculated)</label>
                             <input
                               type="date"
                               value={dates.end_date || ""}

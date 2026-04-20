@@ -7,7 +7,19 @@ export default defineConfig({
     dedupe: ["react", "react-dom"],
   },
   optimizeDeps: {
-    include: ["recharts"],
+    include: ["recharts", "html2canvas", "react-pdf"],
+  },
+  build: {
+    chunkSizeWarningLimit: 1000,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          recharts: ["recharts"],
+          html2canvas: ["html2canvas"],
+          pdfrenderer: ["react-pdf"],
+        },
+      },
+    },
   },
   server: {
     proxy: {

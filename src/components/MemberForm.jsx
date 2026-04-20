@@ -1633,7 +1633,7 @@ export default function MemberForm({
             placeholder="Specify other medical condition"
             value={otherMedical}
             onChange={(e) => setOtherMedical(e.target.value)}
-            className="mt-3 w-full rounded-md border px-3 py-2 text-sm focus:ring-2 focus:ring-primary"
+            className="mt-3 w-full rounded-md border px-3 py-2 text-sm text-white bg-secondary-blue/30 focus:ring-2 focus:ring-primary"
           />
         )}
       </Section>
@@ -2223,7 +2223,7 @@ export default function MemberForm({
                             onChange={(e) =>
                               updateDependent(dep.id, "medical_other", e.target.value)
                             }
-                            className="mt-3 w-full rounded-md border px-3 py-2 text-sm focus:ring-2 focus:ring-primary"
+                            className="mt-3 w-full rounded-md border px-3 py-2 text-sm text-white bg-secondary-blue/30 focus:ring-2 focus:ring-primary"
                           />
                         )}
                       </div>

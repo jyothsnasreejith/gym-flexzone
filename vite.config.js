@@ -8,16 +8,36 @@ export default defineConfig({
   },
   optimizeDeps: {
     include: ["recharts", "html2canvas", "react-pdf"],
+    exclude: ["fs", "path", "crypto", "os"],
   },
   build: {
+    ssr: false,
+    minify: "terser",
     chunkSizeWarningLimit: 1000,
     rollupOptions: {
+      external: [
+        "fs",
+        "path",
+        "crypto",
+        "os",
+        "events",
+        "util",
+        "buffer",
+        "stream",
+      ],
       output: {
         manualChunks: {
           recharts: ["recharts"],
           html2canvas: ["html2canvas"],
           pdfrenderer: ["react-pdf"],
         },
+      },
+      onwarn(warning) {
+        // Suppress specific warnings
+        if (warning.code === "EXTERNAL_NO_RESOLVABLE_ID") {
+          return;
+        }
+        console.warn(warning.message);
       },
     },
   },

@@ -1322,7 +1322,7 @@ export default function Dashboard() {
                 No new members in selected range
               </div>
             ) : (
-              <div className="space-y-3 max-h-[150px] overflow-y-auto pr-1">
+              <div className="space-y-3 max-h-[150px] overflow-hidden pr-1">
                 {newMembers.map((m) => {
                   const joinedOn = m.joining_date || m.created_at;
                   return (

@@ -36,11 +36,11 @@ export default function UpcomingBirthdaysModal({ birthdays, emailTemplates = [] 
         {/* HEADER */}
         <div className="px-6 py-4 border-b flex items-center justify-between sticky top-0 bg-card z-10 rounded-t-xl">
           <div>
-            <h2 className="text-xl font-bold flex items-center gap-2">
+            <h2 className="text-xl font-bold flex items-center gap-2 text-white">
               <span className="material-symbols-outlined text-purple-600">cake</span>
               Upcoming Birthdays
             </h2>
-            <p className="text-sm text-gray-500 mt-1">
+            <p className="text-sm text-white mt-1">
               {birthdays.length} birthday{birthdays.length !== 1 ? "s" : ""} in the next 30 days
             </p>
           </div>
@@ -75,13 +75,13 @@ export default function UpcomingBirthdaysModal({ birthdays, emailTemplates = [] 
                           {member.full_name?.charAt(0) || "?"}
                         </div>
                         <div>
-                          <h3 className="font-semibold text-lg">{member.full_name}</h3>
-                          <p className="text-sm text-gray-500">{member.phone}</p>
+                          <h3 className="font-semibold text-lg text-white">{member.full_name}</h3>
+                          <p className="text-sm text-gray-300">{member.phone}</p>
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-2 text-sm text-gray-600 ml-15">
-                        <span className="material-symbols-outlined text-[18px]">
+                      <div className="flex items-center gap-2 text-sm text-white ml-15">
+                        <span className="material-symbols-outlined text-[18px] text-white">
                           calendar_today
                         </span>
                         <span>{formatBirthday(member.dob)}</span>

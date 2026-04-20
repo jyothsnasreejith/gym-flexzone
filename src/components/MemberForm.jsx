@@ -1866,7 +1866,7 @@ export default function MemberForm({
                                   return { ...prev, [key]: { start_date: newStart, end_date: newEnd } };
                                 });
                               }}
-                              className="w-full h-9 border rounded-lg px-2 text-sm text-white"
+                              className="w-full h-9 border rounded-lg px-2 text-sm text-black"
                             />
                           </div>
                           <div>

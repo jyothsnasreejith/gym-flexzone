@@ -1,0 +1,265 @@
+/* stylelint-disable at-rule-no-unknown */
+
+/* Import Montserrat Font */
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ===== DESIGN SYSTEM BASE ===== */
+
+/* Root Styles */
+@layer base {
+  body {
+    @apply font-montserrat text-white;
+    background-color: #0E3570;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    @apply font-display font-bold;
+  }
+}
+
+/* Material icons (correct family) */
+.material-symbols-outlined {
+  font-variation-settings:
+    'FILL' 0,
+    'wght' 400,
+    'GRAD' 0,
+    'opsz' 24;
+}
+
+.material-symbols-outlined.fill {
+  font-variation-settings: 'FILL' 1;
+}
+
+/* ===== CARD COMPONENT ===== */
+.card,
+.gym-card {
+  @apply relative rounded-2xl p-5 text-white shadow-2xl border overflow-hidden transition-all duration-300;
+  background-color: #114689;
+  border-color: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+}
+
+.card::before,
+.gym-card::before {
+  content: "";
+  @apply absolute top-0 left-0 h-1 w-full rounded-t-2xl;
+  background-color: #F4C400;
+}
+
+.card:hover,
+.gym-card:hover {
+  @apply shadow-2xl -translate-y-1;
+  background-color: #1B5FA8;
+  border-color: rgba(244, 196, 0, 0.2);
+}
+
+.card-title,
+.gym-card-title {
+  @apply text-sm text-opacity-80 text-white font-medium mb-2;
+}
+
+.card-value,
+.gym-card-value {
+  @apply text-4xl font-bold text-white mb-1;
+}
+
+.card-meta,
+.gym-card-meta {
+  @apply text-xs text-opacity-60 text-white;
+}
+
+.card-icon {
+  @apply bg-white bg-opacity-15 p-2 rounded-lg inline-flex items-center justify-center;
+}
+
+/* ===== PRIMARY BUTTON ===== */
+.btn-primary,
+.primary-btn {
+  @apply font-bold py-2 px-4 rounded-lg transition-colors duration-200;
+  background-color: #F4C400;
+  color: #0E3570;
+}
+
+.btn-primary:hover,
+.primary-btn:hover {
+  background-color: #FFD43B;
+}
+
+.btn-primary:disabled,
+.primary-btn:disabled {
+  @apply opacity-50 cursor-not-allowed;
+}
+
+/* ===== SECONDARY BUTTON ===== */
+.btn-secondary,
+.secondary-btn {
+  @apply font-bold py-2 px-4 rounded-lg transition-colors duration-200 border;
+  background-color: #15569C;
+  color: #FFFFFF;
+  border-color: #15569C;
+}
+
+.btn-secondary:hover,
+.secondary-btn:hover {
+  background-color: #1B5FA8;
+  border-color: #1B5FA8;
+}
+
+/* ===== STATUS BADGES ===== */
+.badge-success {
+  @apply bg-success bg-opacity-20 text-success text-xs font-bold px-2 py-1 rounded-full;
+}
+
+.badge-warning {
+  @apply bg-warning bg-opacity-20 text-warning text-xs font-bold px-2 py-1 rounded-full;
+}
+
+.badge-error {
+  @apply bg-error bg-opacity-20 text-error text-xs font-bold px-2 py-1 rounded-full;
+}
+
+.badge-info {
+  @apply bg-info bg-opacity-20 text-info text-xs font-bold px-2 py-1 rounded-full;
+}
+
+/* ===== TEXT UTILITIES ===== */
+.text-primary {
+  color: #FFFFFF;
+}
+
+.text-secondary {
+  color: #D1D5DB;
+}
+
+.text-muted {
+  color: #9CA3AF;
+}
+
+/* ===== DIVIDER ===== */
+.divider,
+.gym-divider {
+  @apply h-px bg-white bg-opacity-10;
+}
+
+/* ===== DASHBOARD GRID ===== */
+.dashboard-grid {
+  @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5;
+}
+
+.dashboard-grid-3 {
+  @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5;
+}
+
+/* ===== GLASS EFFECT (Optional) ===== */
+.glass-effect {
+  @apply bg-opacity-70 backdrop-blur-lg;
+  background: rgba(21, 86, 156, 0.7);
+  backdrop-filter: blur(10px);
+}
+
+/* ===== NEW UTILITY CLASSES ===== */
+.bg-card {
+  background-color: #114689;
+}
+
+.bg-card-hover {
+  background-color: #1B5FA8;
+}
+
+.text-accent {
+  color: #F4C400;
+}
+
+.text-accent-light {
+  color: #FFD43B;
+}
+
+.border-soft {
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.hover-card {
+  transition: all 300ms ease;
+}
+
+.hover-card:hover {
+  background-color: #1B5FA8;
+  transform: translateY(-4px);
+}
+
+/* ===== TABLE & LIST HOVER EFFECTS ===== */
+tbody tr {
+  @apply transition-colors duration-200;
+}
+
+tbody tr:hover {
+  background-color: rgba(27, 95, 168, 0.3);
+}
+
+/* ===== MODAL & DIALOG STYLING ===== */
+.modal-bg {
+  background-color: #114689;
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+/* ===== INPUT FIELD STYLING ===== */
+@layer components {
+  .input-field {
+    @apply w-full border text-white rounded-lg px-4 py-2 placeholder-opacity-60 focus:outline-none focus:ring-2 transition-all;
+    background-color: rgba(21, 86, 156, 0.5);
+    border-color: rgba(255, 255, 255, 0.08);
+    color: #FFFFFF;
+  }
+
+  .input-field:focus {
+    background-color: rgba(21, 86, 156, 0.7);
+    border-color: #F4C400;
+    --tw-ring-color: rgba(244, 196, 0, 0.3);
+  }
+
+  .input-field:disabled {
+    @apply opacity-50 cursor-not-allowed;
+  }
+
+  .input-field::placeholder {
+    color: rgba(255, 255, 255, 0.6);
+  }
+}
+
+/* Enable Tailwind container queries */
+@layer utilities {
+  .container {
+    container-type: inline-size;
+  }
+
+  @container (max-width: 1024px) {
+    .table-col-area,
+    .table-col-age,
+    .table-col-gender {
+      display: none;
+    }
+  }
+
+  @container (max-width: 768px) {
+    .table-col-phone,
+    .table-col-source {
+      display: none;
+    }
+  }
+
+  @container (max-width: 640px) {
+    .table-col-id {
+      display: none;
+    }
+  }
+}

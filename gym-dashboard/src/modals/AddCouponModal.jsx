@@ -413,7 +413,7 @@ export default function AddCouponModal({
             <button
               type="button"
               onClick={() => setDropdownOpen((v) => !v)}
-              className="w-full border rounded-lg px-3 py-2 text-left flex items-center justify-between"
+              className="w-full border rounded-lg px-3 py-2 text-left flex items-center justify-between bg-card"
             >
               <span className="text-sm text-white">
                 {selectedVariants.length === 0
@@ -433,7 +433,7 @@ export default function AddCouponModal({
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search packages or variants"
-                  className="w-full border rounded-lg px-3 py-2 text-sm"
+                  className="w-full border rounded-lg px-3 py-2 text-sm bg-card text-white"
                 />
 
                 {loadingPackages ? (

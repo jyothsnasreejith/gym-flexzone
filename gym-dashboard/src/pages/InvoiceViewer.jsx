@@ -85,7 +85,7 @@ export default function InvoiceViewer() {
       <div className="fixed z-50 right-4 top-4 hidden md:block">
         <button
           onClick={handleDownload}
-          className="bg-card text-black px-6 py-3 rounded-lg font-semibold hover:bg-slate-800/30 flex items-center gap-2 shadow-lg"
+          className="bg-card text-white px-6 py-3 rounded-lg font-semibold hover:bg-slate-800/30 flex items-center gap-2 shadow-lg"
         >
           <span className="material-symbols-outlined">download</span>
           Download
@@ -95,7 +95,7 @@ export default function InvoiceViewer() {
       <div className="fixed z-50 right-4 bottom-4 md:hidden">
         <button
           onClick={handleDownload}
-          className="bg-card text-black w-14 h-14 rounded-full font-semibold hover:bg-slate-800/30 flex items-center justify-center gap-2 shadow-lg"
+          className="bg-card text-white w-14 h-14 rounded-full font-semibold hover:bg-slate-800/30 flex items-center justify-center gap-2 shadow-lg"
         >
           <span className="material-symbols-outlined">download</span>
         </button>

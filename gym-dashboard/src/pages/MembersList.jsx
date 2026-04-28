@@ -23,6 +23,25 @@ export default function MembersList() {
     return `${dd}/${mm}/${yy}`;
   };
 
+  const isExpired = (dateStr) => {
+    if (!dateStr) return false;
+    const expiry = new Date(dateStr);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    expiry.setHours(0, 0, 0, 0);
+    return expiry < today;
+  };
+
+  const isMembershipExpired = (member) => {
+    // Check if package is expired
+    if (member.expiry_date && isExpired(member.expiry_date)) {
+      return true;
+    }
+    // Check if any add-on is expired
+    const addOns = member.add_on_items || [];
+    return addOns.some((ao) => ao.end_date && isExpired(ao.end_date));
+  };
+
   const getBillPayable = (bill) => {
     const base = Number(bill.base_amount ?? 0);
     const discount = Number(bill.discount_amount ?? 0);
@@ -97,6 +116,7 @@ export default function MembersList() {
   const [packages, setPackages] = useState([]);
   const [trainers, setTrainers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [showExpiredOnly, setShowExpiredOnly] = useState(false);
   const [filters, setFilters] = useState({
     package_id: "",
     trainer_id: "",
@@ -429,20 +449,26 @@ export default function MembersList() {
         };
       });
 
-      setMembers(normalized);
+      // Apply expired members filter if enabled
+      let filteredMembers = normalized;
+      if (showExpiredOnly) {
+        filteredMembers = normalized.filter((m) => isMembershipExpired(m));
+      }
+
+      setMembers(filteredMembers);
     } catch (error) {
       console.error("Failed to load members:", error);
       setMembers([]);
     } finally {
       setLoading(false);
     }
-  }, [filters, packages]);
+  }, [filters, packages, showExpiredOnly]);
 
   /* ================= TRIGGER LOAD ON FILTER CHANGE ================= */
   useEffect(() => {
     if (packages.length === 0) return;
     loadMembers();
-  }, [filters, packages]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [filters, packages, showExpiredOnly]); // eslint-disable-line react-hooks/exhaustive-deps
 
   /* ================= REFRESH ON FOCUS ================= */
   useEffect(() => {
@@ -495,7 +521,7 @@ export default function MembersList() {
       </div>
 
       {/* FILTER BAR */}
-      <div className="bg-card border rounded-xl p-3 mb-5 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-[1.5fr_1fr_1fr_auto] gap-3 items-center">
+      <div className="bg-card border rounded-xl p-3 mb-5 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-[1.5fr_1fr_1fr_auto_auto] gap-3 items-center">
         <input
           type="text"
           placeholder="Search by name or phone..."
@@ -536,10 +562,23 @@ export default function MembersList() {
           ))}
         </select>
 
-        {filtersActive && (
+        <label className="flex items-center gap-2 h-10 px-3 border rounded-lg hover:bg-slate-800/50 cursor-pointer text-sm font-medium whitespace-nowrap">
+          <input
+            type="checkbox"
+            checked={showExpiredOnly}
+            onChange={(e) => setShowExpiredOnly(e.target.checked)}
+            className="rounded border-gray-300 text-primary focus:ring-primary cursor-pointer"
+          />
+          <span>Expired Only</span>
+        </label>
+
+        {(filtersActive || showExpiredOnly) && (
           <button
-            onClick={() => setFilters({ package_id: "", trainer_id: "", search: "" })}
-            className="h-10 px-4 rounded-lg bg-gray-100 hover:bg-gray-200 text-white font-semibold text-sm justify-self-start md:justify-self-auto"
+            onClick={() => {
+              setFilters({ package_id: "", trainer_id: "", search: "" });
+              setShowExpiredOnly(false);
+            }}
+            className="h-10 px-4 rounded-lg bg-slate-700 hover:bg-slate-600 text-white font-semibold text-sm justify-self-start md:justify-self-auto"
           >
             Clear
           </button>
@@ -663,6 +702,14 @@ export default function MembersList() {
                       <td className="px-5 py-3">
                         <div onClick={(e) => e.stopPropagation()}>
                           <div className="flex items-center gap-2">
+                            {isMembershipExpired(m) && (
+                              <button
+                                onClick={() => navigate(`/members/${m.id}/renew`)}
+                                className="px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold rounded-lg transition-colors"
+                              >
+                                Renew
+                              </button>
+                            )}
                             <ActionButtons
                               size="sm"
                               onDelete={() => deleteMember(m.id)}
@@ -713,7 +760,15 @@ export default function MembersList() {
                           Pending: ₹{dueAmount}
                         </div>
                       </div>
-                      <div onClick={(e) => e.stopPropagation()}>
+                      <div onClick={(e) => e.stopPropagation()} className="flex gap-2 items-center justify-end">
+                        {isMembershipExpired(m) && (
+                          <button
+                            onClick={() => navigate(`/members/${m.id}/renew`)}
+                            className="px-2 py-1 bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold rounded transition-colors"
+                          >
+                            Renew
+                          </button>
+                        )}
                         <ActionButtons
                           size="sm"
                           onDelete={() => deleteMember(m.id)}

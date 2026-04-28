@@ -2,11 +2,57 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../../supabaseClient";
 import { paymentStatusClass } from "../../utils/style";
+import { useToast } from "../../context/ToastContext";
 
 export default function Billing() {
     const navigate = useNavigate();
+    const { showToast } = useToast();
     const [bills, setBills] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [editingBillId, setEditingBillId] = useState(null);
+    const [editingDate, setEditingDate] = useState("");
+    const [updatingDateId, setUpdatingDateId] = useState(null);
+
+    const startDateEdit = (bill) => {
+        setEditingBillId(bill.id);
+        setEditingDate((bill.billing_date || "").slice(0, 10));
+    };
+
+    const cancelDateEdit = () => {
+        setEditingBillId(null);
+        setEditingDate("");
+    };
+
+    const saveBillingDate = async (billId) => {
+        if (!editingDate) {
+            showToast("Please select a billing date", "error");
+            return;
+        }
+
+        setUpdatingDateId(billId);
+
+        const { error } = await supabase
+            .from("bills")
+            .update({ billing_date: editingDate })
+            .eq("id", billId);
+
+        if (error) {
+            console.error("Failed to update billing date:", error);
+            showToast("Failed to update billing date", "error");
+            setUpdatingDateId(null);
+            return;
+        }
+
+        setBills((prev) =>
+            prev.map((bill) =>
+                bill.id === billId ? { ...bill, billing_date: editingDate } : bill
+            )
+        );
+
+        showToast("Billing date updated", "success");
+        setUpdatingDateId(null);
+        cancelDateEdit();
+    };
 
     useEffect(() => {
         const loadBills = async () => {
@@ -133,12 +179,23 @@ export default function Billing() {
                                             <td className="px-6 py-4 font-medium">
                                                 {b.members?.full_name || "—"}
                                             </td>
+                                            <td className="px-6 py-4 text-secondary">
                                                 {b.package_variant?.package?.title
                                                     ? `${b.package_variant.package.title} (${b.package_variant.duration_value} ${b.package_variant.duration_unit})`
                                                     : "—"}
+                                            </td>
 
                                             <td className="px-6 py-4 text-secondary">
-                                                {b.billing_date}
+                                                {editingBillId === b.id ? (
+                                                    <input
+                                                        type="date"
+                                                        value={editingDate}
+                                                        onChange={(e) => setEditingDate(e.target.value)}
+                                                        className="border rounded-lg px-2 py-1 text-xs bg-card text-white"
+                                                    />
+                                                ) : (
+                                                    b.billing_date
+                                                )}
                                             </td>
                                             <td className="px-6 py-4 font-semibold">
                                                 ₹{Number(b.amount).toLocaleString()}
@@ -156,12 +213,45 @@ export default function Billing() {
                                                 </span>
                                             </td>
                                             <td className="px-6 py-4 text-right">
-                                                <button
-                                                    onClick={() => navigate(`/billing/${b.id}`)}
-                                                    className="text-primary font-medium text-sm hover:underline"
-                                                >
-                                                    View
-                                                </button>
+                                                <div className="inline-flex items-center gap-3">
+                                                    {editingBillId === b.id ? (
+                                                        <>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => saveBillingDate(b.id)}
+                                                                disabled={updatingDateId === b.id}
+                                                                className="text-green-400 font-medium text-sm hover:underline disabled:opacity-60"
+                                                            >
+                                                                {updatingDateId === b.id ? "Saving..." : "Save"}
+                                                            </button>
+                                                            <button
+                                                                type="button"
+                                                                onClick={cancelDateEdit}
+                                                                disabled={updatingDateId === b.id}
+                                                                className="text-secondary font-medium text-sm hover:underline disabled:opacity-60"
+                                                            >
+                                                                Cancel
+                                                            </button>
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => startDateEdit(b)}
+                                                                className="text-amber-300 font-medium text-sm hover:underline"
+                                                            >
+                                                                Edit Date
+                                                            </button>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => navigate(`/billing/${b.id}`)}
+                                                                className="text-primary font-medium text-sm hover:underline"
+                                                            >
+                                                                View
+                                                            </button>
+                                                        </>
+                                                    )}
+                                                </div>
 
                                             </td>
                                         </tr>
@@ -187,7 +277,17 @@ export default function Billing() {
                                             </p>
 
                                             <p className="text-xs text-secondary">
-                                                {b.billing_date}
+                                                {editingBillId === b.id ? (
+                                                    <input
+                                                        type="date"
+                                                        value={editingDate}
+                                                        onChange={(e) => setEditingDate(e.target.value)}
+                                                        onClick={(e) => e.stopPropagation()}
+                                                        className="mt-1 border rounded-lg px-2 py-1 text-xs bg-card text-white"
+                                                    />
+                                                ) : (
+                                                    b.billing_date
+                                                )}
                                             </p>
                                         </div>
                                         <span
@@ -209,6 +309,46 @@ export default function Billing() {
                                     <div className="flex justify-between text-sm">
                                         <span className="text-secondary">Mode</span>
                                         <span className="capitalize">{b.payment_mode}</span>
+                                    </div>
+
+                                    <div className="flex justify-end gap-3 pt-1">
+                                        {editingBillId === b.id ? (
+                                            <>
+                                                <button
+                                                    type="button"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        saveBillingDate(b.id);
+                                                    }}
+                                                    disabled={updatingDateId === b.id}
+                                                    className="text-green-400 text-xs font-medium"
+                                                >
+                                                    {updatingDateId === b.id ? "Saving..." : "Save"}
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        cancelDateEdit();
+                                                    }}
+                                                    disabled={updatingDateId === b.id}
+                                                    className="text-secondary text-xs font-medium"
+                                                >
+                                                    Cancel
+                                                </button>
+                                            </>
+                                        ) : (
+                                            <button
+                                                type="button"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    startDateEdit(b);
+                                                }}
+                                                className="text-amber-300 text-xs font-medium"
+                                            >
+                                                Edit Date
+                                            </button>
+                                        )}
                                     </div>
                                 </div>
                             ))}

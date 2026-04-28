@@ -397,7 +397,7 @@ export default function Expenses() {
                 <input
                   type="file"
                   accept="image/*,application/pdf"
-                  className="w-full border rounded-lg px-3 py-2"
+                  className="w-full border rounded-lg px-3 py-2 bg-card text-white"
                   onChange={(e) => setProofFile(e.target.files?.[0] || null)}
                 />
               </div>

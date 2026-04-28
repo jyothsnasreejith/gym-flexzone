@@ -48,7 +48,7 @@ export default function Fees() {
   const [editData, setEditData] = useState({
     base_amount: "",
     discount_amount: "",
-    due_date: "",
+    billing_date: "",
     amount_paid: "",
   });
   const [savingEdit, setSavingEdit] = useState(false);
@@ -771,7 +771,7 @@ export default function Fees() {
     setEditData({
       base_amount: bill.base_amount || 0,
       discount_amount: bill.discount_amount || 0,
-      due_date: bill.due_date || new Date().toISOString().slice(0, 10),
+      billing_date: bill.billing_date || new Date().toISOString().slice(0, 10),
       amount_paid: paidAmount,
     });
     setEditModal(bill);
@@ -779,7 +779,7 @@ export default function Fees() {
 
   const closeEditModal = () => {
     setEditModal(null);
-    setEditData({ base_amount: "", discount_amount: "", due_date: "" });
+    setEditData({ base_amount: "", discount_amount: "", billing_date: "" });
   };
 
   const saveEdit = async () => {
@@ -804,7 +804,7 @@ export default function Fees() {
           discount_amount: newDiscount,
           payable_amount: newPayable,
           amount: newPayable,
-          due_date: editData.due_date,
+          billing_date: editData.billing_date,
           payment_status: statusFromPaid,
         })
         .eq("id", editModal.id);
@@ -838,13 +838,13 @@ export default function Fees() {
         old_values: {
           base_amount: oldBill.base_amount,
           discount_amount: oldBill.discount_amount,
-          due_date: oldBill.due_date,
+          billing_date: oldBill.billing_date,
           paid_amount: oldBill.payments?.reduce((s, p) => s + Number(p.amount_paid), 0) || 0,
         },
         new_values: {
           base_amount: newBase,
           discount_amount: newDiscount,
-          due_date: editData.due_date,
+          billing_date: editData.billing_date,
           paid_amount: newPaid,
         },
       });
@@ -971,7 +971,7 @@ export default function Fees() {
               value={memberQuery}
               onChange={(e) => setMemberQuery(e.target.value)}
               placeholder="Search by name"
-              className="mt-3 w-full rounded-md border px-3 py-2 text-sm text-black"
+              className="mt-3 w-full rounded-md border px-3 py-2 text-sm text-white bg-card"
             />
           </div>
 
@@ -1464,7 +1464,7 @@ export default function Fees() {
                   type="number"
                   value={editData.base_amount}
                   onChange={(e) => setEditData({ ...editData, base_amount: e.target.value })}
-                  className="mt-1 w-full border rounded-lg px-3 py-2 text-sm"
+                  className="mt-1 w-full border rounded-lg px-3 py-2 text-sm bg-card text-white"
                 />
               </div>
               <div>
@@ -1473,15 +1473,15 @@ export default function Fees() {
                   type="number"
                   value={editData.discount_amount}
                   onChange={(e) => setEditData({ ...editData, discount_amount: e.target.value })}
-                  className="mt-1 w-full border rounded-lg px-3 py-2 text-sm"
+                  className="mt-1 w-full border rounded-lg px-3 py-2 text-sm bg-card text-white"
                 />
               </div>
               <div>
-                <label className="text-xs font-medium text-secondary">Due Date</label>
+                <label className="text-xs font-medium text-secondary">Billing Date</label>
                 <input
                   type="date"
-                  value={editData.due_date}
-                  onChange={(e) => setEditData({ ...editData, due_date: e.target.value })}
+                  value={editData.billing_date}
+                  onChange={(e) => setEditData({ ...editData, billing_date: e.target.value })}
                   className="mt-1 w-full border rounded-lg px-3 py-2 text-sm bg-card text-white"
                 />
               </div>

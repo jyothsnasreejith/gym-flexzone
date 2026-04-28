@@ -352,7 +352,7 @@ const AddPackageModal = ({ mode = "add", initialData, onSave }) => {
                     : createPTVariant(),
                 ]);
               }}
-              className="w-full border rounded-md px-3 py-2 text-gray-800"
+              className="w-full border rounded-md px-3 py-2 bg-card text-white"
             >
               <option value="membership">Membership</option>
               <option value="personal_training">Personal Training</option>
@@ -365,7 +365,7 @@ const AddPackageModal = ({ mode = "add", initialData, onSave }) => {
                 setMemberScope(scope);
                 setMemberCount(scope === "family" ? 3 : scope === "couple" ? 2 : 1);
               }}
-              className="w-full border rounded-md px-3 py-2 text-gray-800"
+              className="w-full border rounded-md px-3 py-2 bg-card text-white"
             >
               <option value="individual">Individual</option>
               <option value="couple">Couple</option>
@@ -427,7 +427,7 @@ const AddPackageModal = ({ mode = "add", initialData, onSave }) => {
                 setBatchStartTime(slot?.start_time || "");
                 setBatchEndTime(slot?.end_time || "");
               }}
-              className="w-full border rounded-md px-3 py-2 text-sm text-gray-800"
+              className="w-full border rounded-md px-3 py-2 text-sm bg-card text-white"
             >
               <option value="">Select preset (optional)</option>
               {batchSlots.map((slot) => (

@@ -357,26 +357,26 @@ export default function RenewMember() {
       </div>
 
       {/* CURRENT STATUS BANNER */}
-      <div className="bg-red-50 border border-red-200 rounded-xl px-5 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div className="bg-red-900/20 border border-red-700/40 rounded-xl px-5 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div className="flex items-center gap-3">
-          <span className="material-symbols-outlined text-red-500">event_busy</span>
+          <span className="material-symbols-outlined text-red-400">event_busy</span>
           <div>
-            <p className="text-sm font-semibold text-red-700">
+            <p className="text-sm font-semibold text-red-300">
               {member.end_date && new Date(member.end_date) < new Date()
                 ? "Membership Expired"
                 : "Membership Active"}
             </p>
-            <p className="text-xs text-red-500">
+            <p className="text-xs text-red-400">
               {member.end_date ? `Expired on ${fmt(member.end_date)}` : "No expiry date set"}
             </p>
           </div>
         </div>
         {newEndDate && (
-          <div className="flex items-center gap-2 bg-green-50 border border-green-200 rounded-lg px-4 py-2">
-            <span className="material-symbols-outlined text-green-500 text-[18px]">event_available</span>
+          <div className="flex items-center gap-2 bg-green-900/20 border border-green-700/40 rounded-lg px-4 py-2">
+            <span className="material-symbols-outlined text-green-400 text-[18px]">event_available</span>
             <div>
-              <p className="text-xs text-green-600 font-medium">New Expiry</p>
-              <p className="text-sm font-bold text-green-700">{fmt(newEndDate)}</p>
+              <p className="text-xs text-green-300 font-medium">New Expiry</p>
+              <p className="text-sm font-bold text-green-200">{fmt(newEndDate)}</p>
             </div>
           </div>
         )}
@@ -404,7 +404,7 @@ export default function RenewMember() {
                   {/* card header */}
                   <div
                     className={`px-4 py-3 text-center font-bold text-sm ${
-                      isSelected ? "bg-primary text-white" : "bg-gray-100 text-white"
+                      isSelected ? "bg-primary text-white" : "bg-card text-white"
                     }`}
                   >
                     {pkg.title}
@@ -511,7 +511,7 @@ export default function RenewMember() {
                             type="date"
                             value={dates.start_date || ""}
                             onChange={(e) => updateAddOnStartDate(key, e.target.value, addon)}
-                            className="w-full h-9 border rounded-lg px-2 text-sm"
+                            className="w-full h-9 border rounded-lg px-2 text-sm bg-card text-white"
                           />
                         </div>
                         <div>
@@ -523,7 +523,7 @@ export default function RenewMember() {
                             value={dates.end_date || ""}
                             readOnly
                             disabled
-                            className="w-full h-9 border rounded-lg px-2 text-sm bg-slate-800/50 text-secondary cursor-not-allowed"
+                            className="w-full h-9 border rounded-lg px-2 text-sm bg-slate-700 text-secondary cursor-not-allowed"
                           />
                         </div>
                       </div>

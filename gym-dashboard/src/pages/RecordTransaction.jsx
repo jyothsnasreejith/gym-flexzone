@@ -113,7 +113,7 @@ export default function RecordTransaction() {
                 <input
                   type="date"
                   required
-                  className="form-input w-full rounded-lg text-black"
+                  className="form-input w-full rounded-lg bg-card text-white"
                   value={form.date}
                   onChange={onChange("date")}
                 />

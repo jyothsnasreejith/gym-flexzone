@@ -21,6 +21,12 @@ export default function ExpiredMembersModal({ emailTemplates = [] }) {
 
         // Helper to compute expiry date from joining_date (same as MembersList)
         const computeExpiryDate = (member) => {
+          // Priority 1: Use stored end_date if it exists (from renewal or recent updates)
+          if (member.end_date) {
+            return member.end_date;
+          }
+
+          // Priority 2: Calculate fresh from joining_date (legacy data)
           const variant = member.package_variants;
           if (!variant || variant.pricing_type !== "duration") return null;
 

@@ -596,6 +596,12 @@ export default function Dashboard() {
 
         // Helper to compute expiry date from joining_date
         const computeExpiryDate = (member) => {
+          // Priority 1: Use stored end_date if it exists (from renewal or recent updates)
+          if (member.end_date) {
+            return member.end_date;
+          }
+
+          // Priority 2: Calculate fresh from joining_date (legacy data)
           const variant = member.package_variants;
           if (!variant || variant.pricing_type !== "duration") return null;
 

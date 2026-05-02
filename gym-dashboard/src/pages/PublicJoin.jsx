@@ -290,7 +290,6 @@ export default function PublicJoin() {
       // Helper: Compress image before upload (for both avatars and ID proofs if images)
       const compressImage = async (file) => {
         if (!file.type?.startsWith("image/")) {
-          console.log("⏭️ Skipping compression - not an image:", file.type);
           return file;
         }
         
@@ -300,26 +299,16 @@ export default function PublicJoin() {
           
           img.onload = () => {
             try {
-              console.log("🖼️ Image loaded for compression:", {
-                originalDimensions: `${img.width}x${img.height}`,
-              });
-              
               // Reduce dimensions: max 1200px
               const maxDim = 1200;
               const scale = Math.min(1, maxDim / Math.max(img.width, img.height));
               const width = Math.round(img.width * scale);
               const height = Math.round(img.height * scale);
               
-              console.log("📐 Compression scaling:", {
-                scale: scale.toFixed(2),
-                targetDimensions: `${width}x${height}`,
-              });
-              
               canvas.width = width;
               canvas.height = height;
               const ctx = canvas.getContext("2d");
               if (!ctx) {
-                console.warn("⚠️ Could not get canvas context");
                 resolve(file);
                 return;
               }
@@ -330,7 +319,6 @@ export default function PublicJoin() {
               canvas.toBlob(
                 (blob) => {
                   if (!blob) {
-                    console.warn("⚠️ Canvas toBlob returned null");
                     resolve(file);
                     return;
                   }
@@ -340,30 +328,20 @@ export default function PublicJoin() {
                     lastModified: Date.now(),
                   });
                   
-                  const ratio = ((file.size - compressed.size) / file.size * 100).toFixed(0);
-                  console.log("✅ Image compressed:", {
-                    original: `${(file.size / 1024 / 1024).toFixed(2)}MB`,
-                    compressed: `${(compressed.size / 1024 / 1024).toFixed(2)}MB`,
-                    saved: `${ratio}%`,
-                  });
-                  
                   resolve(compressed);
                 },
                 "image/jpeg",
                 0.8
               );
             } catch (err) {
-              console.error("❌ Compression error:", err);
               resolve(file);
             }
           };
           
-          img.onerror = (err) => {
-            console.error("❌ Could not load image for compression:", err);
+          img.onerror = () => {
             resolve(file);
           };
           
-          console.log("🔄 Creating object URL for compression...");
           img.src = URL.createObjectURL(file);
         });
       };
@@ -371,47 +349,28 @@ export default function PublicJoin() {
       // Upload ID Proof with retry logic and compression
       if (idProofFile) {
         try {
-          console.log("=".repeat(60));
-          console.log("🚀 ID PROOF UPLOAD SEQUENCE STARTING");
-          console.log("=".repeat(60));
-          
           let uploadFile = idProofFile;
           const fileInfo = {
             name: idProofFile.name,
             size: `${(idProofFile.size / 1024 / 1024).toFixed(2)}MB`,
             type: idProofFile.type,
           };
-          
-          console.log("📄 Initial ID Proof File:", fileInfo);
           uploadDebugInfo.idProof.originalFile = fileInfo;
           
           // Compress if image
           if (idProofFile.type?.startsWith("image/")) {
-            console.log("📦 Compressing ID proof image...");
             uploadFile = await compressImage(idProofFile);
             const compressedInfo = {
               newSize: `${(uploadFile.size / 1024 / 1024).toFixed(2)}MB`,
               newType: uploadFile.type,
             };
-            console.log("✅ Compression complete:", compressedInfo);
             uploadDebugInfo.idProof.compressed = compressedInfo;
           } else {
-            console.log("⏭️ Skipping compression for non-image:", idProofFile.type);
             uploadDebugInfo.idProof.compressed = { skipped: true, reason: "not-image" };
           }
           
           const ext = uploadFile.name.split(".").pop();
           const fileName = `id-proof-${member.id}.${ext}`;
-          
-          const uploadStartInfo = {
-            fileName,
-            fileSize: `${(uploadFile.size / 1024).toFixed(1)}KB`,
-            fileType: uploadFile.type,
-            memberId: member.id,
-            bucketName: "id-proofs",
-          };
-          console.log("📤 STORAGE UPLOAD - ATTEMPT 1/3:", uploadStartInfo);
-          uploadDebugInfo.idProof.uploadStart = uploadStartInfo;
 
           // Upload with explicit retry
           let uploadError = null;
@@ -421,7 +380,6 @@ export default function PublicJoin() {
           
           while (retries > 0) {
             attemptCount++;
-            console.log(`\n🔄 Upload attempt ${attemptCount}/3...`);
             
             try {
               const result = await supabase.storage
@@ -437,13 +395,11 @@ export default function PublicJoin() {
                   status: result.error.status,
                 } : null,
               };
-              console.log("📡 Storage API Response:", apiResponse);
               uploadDebugInfo.idProof.attempts.push({ attempt: attemptCount, response: apiResponse });
               
               if (!result.error) {
                 uploadError = null;
                 uploadSuccess = true;
-                console.log("✅ Storage upload successful!");
                 break;
               }
               
@@ -452,42 +408,27 @@ export default function PublicJoin() {
               uploadDebugInfo.idProof.errors.push(uploadError);
               
               if (retries > 0) {
-                console.warn(`⏳ Retrying in 1 second... (${retries} retries left)`);
                 await new Promise(resolve => setTimeout(resolve, 1000));
               }
             } catch (catchErr) {
-              console.error("💥 Upload catch error:", catchErr);
               uploadError = catchErr;
               retries--;
               uploadDebugInfo.idProof.errors.push({ catchError: catchErr.message });
               debugErrors.push({ type: "ID_PROOF_CATCH", error: catchErr.message });
               
               if (retries > 0) {
-                console.warn(`⏳ Retrying in 1 second... (${retries} retries left)`);
                 await new Promise(resolve => setTimeout(resolve, 1000));
               }
             }
           }
 
-          if (uploadError) {
-            console.error("❌ ID PROOF STORAGE UPLOAD FAILED:", uploadError);
-            uploadDebugInfo.idProof.success = false;
-            debugErrors.push({ type: "ID_PROOF_UPLOAD", error: uploadError?.message || "Unknown error" });
-          } else if (uploadSuccess) {
-            console.log("🔗 Getting public URL...");
+          if (!uploadError && uploadSuccess) {
             const { data: urlData } = supabase.storage
               .from("id-proofs")
               .getPublicUrl(fileName);
 
-            console.log("✅ ID PROOF PUBLIC URL:", { 
-              publicUrl: urlData.publicUrl,
-              urlLength: urlData.publicUrl?.length,
-            });
             uploadDebugInfo.idProof.url = urlData.publicUrl;
 
-            console.log("🔄 Calling update_member_images RPC function...");
-            
-            // Use RPC function to update - this works better with RLS policies
             const { error: rpcError, data: rpcData } = await supabase.rpc(
               "update_member_images",
               {
@@ -506,72 +447,50 @@ export default function PublicJoin() {
               } : null,
               data: rpcData,
             };
-            console.log("📡 RPC Response:", rpcResponse);
             uploadDebugInfo.idProof.rpcResponse = rpcResponse;
 
             if (rpcError) {
-              console.error("❌ ID PROOF URL UPDATE RPC FAILED:", rpcError);
               uploadDebugInfo.idProof.rpcError = rpcError;
               uploadDebugInfo.idProof.success = false;
               debugErrors.push({ type: "ID_PROOF_RPC", error: rpcError?.message, code: rpcError?.code });
             } else {
-              console.log("✅ ID PROOF URL SAVED TO DATABASE:", { rpcData });
               uploadDebugInfo.idProof.success = true;
             }
+          } else {
+            uploadDebugInfo.idProof.success = false;
+            if (uploadError) {
+              debugErrors.push({ type: "ID_PROOF_UPLOAD", error: uploadError?.message || "Unknown error" });
+            }
           }
-          
-          console.log("=".repeat(60));
         } catch (err) {
-          console.error("❌ ID PROOF UPLOAD EXCEPTION:", err);
           uploadDebugInfo.idProof.success = false;
           debugErrors.push({ type: "ID_PROOF_EXCEPTION", error: err.message });
-          console.log("=".repeat(60));
         }
       } else {
-        console.log("⚠️ ID PROOF FILE NOT PROVIDED - skipping upload");
         uploadDebugInfo.idProof.skipped = true;
       }
 
       // Upload Profile Photo with retry logic and aggressive compression
       if (photoFile) {
         try {
-          console.log("=".repeat(60));
-          console.log("🚀 PROFILE PHOTO UPLOAD SEQUENCE STARTING");
-          console.log("=".repeat(60));
-          
           let uploadFile = photoFile;
-          
           const fileInfo = {
             name: photoFile.name,
             size: `${(photoFile.size / 1024 / 1024).toFixed(2)}MB`,
             type: photoFile.type,
           };
-          
-          console.log("📸 Initial Profile Photo File:", fileInfo);
           uploadDebugInfo.profilePhoto.originalFile = fileInfo;
           
           // Always compress profile photos aggressively
-          console.log("📦 Compressing profile photo...");
           uploadFile = await compressImage(photoFile);
           const compressedInfo = {
             newSize: `${(uploadFile.size / 1024 / 1024).toFixed(2)}MB`,
             newType: uploadFile.type,
           };
-          console.log("✅ Compression complete:", compressedInfo);
           uploadDebugInfo.profilePhoto.compressed = compressedInfo;
 
           const ext = uploadFile.name.split(".").pop();
           const fileName = `member-${member.id}.${ext}`;
-          
-          const uploadStartInfo = {
-            fileName,
-            fileSize: `${(uploadFile.size / 1024).toFixed(1)}KB`,
-            fileType: uploadFile.type,
-            memberId: member.id,
-            bucketName: "member-avatars",
-          };
-          console.log("📤 STORAGE UPLOAD - ATTEMPT 1/3:", uploadStartInfo);
-          uploadDebugInfo.profilePhoto.uploadStart = uploadStartInfo;
 
           // Upload with explicit retry
           let uploadError = null;
@@ -581,7 +500,6 @@ export default function PublicJoin() {
           
           while (retries > 0) {
             attemptCount++;
-            console.log(`\n🔄 Upload attempt ${attemptCount}/3...`);
             
             try {
               const result = await supabase.storage
@@ -597,13 +515,11 @@ export default function PublicJoin() {
                   status: result.error.status,
                 } : null,
               };
-              console.log("📡 Storage API Response:", apiResponse);
               uploadDebugInfo.profilePhoto.attempts.push({ attempt: attemptCount, response: apiResponse });
               
               if (!result.error) {
                 uploadError = null;
                 uploadSuccess = true;
-                console.log("✅ Storage upload successful!");
                 break;
               }
               
@@ -612,42 +528,27 @@ export default function PublicJoin() {
               uploadDebugInfo.profilePhoto.errors.push(uploadError);
               
               if (retries > 0) {
-                console.warn(`⏳ Retrying in 1 second... (${retries} retries left)`);
                 await new Promise(resolve => setTimeout(resolve, 1000));
               }
             } catch (catchErr) {
-              console.error("💥 Upload catch error:", catchErr);
               uploadError = catchErr;
               retries--;
               uploadDebugInfo.profilePhoto.errors.push({ catchError: catchErr.message });
               debugErrors.push({ type: "PROFILE_CATCH", error: catchErr.message });
               
               if (retries > 0) {
-                console.warn(`⏳ Retrying in 1 second... (${retries} retries left)`);
                 await new Promise(resolve => setTimeout(resolve, 1000));
               }
             }
           }
 
-          if (uploadError) {
-            console.error("❌ PROFILE PHOTO STORAGE UPLOAD FAILED:", uploadError);
-            uploadDebugInfo.profilePhoto.success = false;
-            debugErrors.push({ type: "PROFILE_UPLOAD", error: uploadError?.message || "Unknown error" });
-          } else if (uploadSuccess) {
-            console.log("🔗 Getting public URL...");
+          if (!uploadError && uploadSuccess) {
             const { data: urlData } = supabase.storage
               .from("member-avatars")
               .getPublicUrl(fileName);
 
-            console.log("✅ PROFILE PHOTO PUBLIC URL:", { 
-              publicUrl: urlData.publicUrl,
-              urlLength: urlData.publicUrl?.length,
-            });
             uploadDebugInfo.profilePhoto.url = urlData.publicUrl;
 
-            console.log("🔄 Calling update_member_images RPC function...");
-            
-            // Use RPC function to update - this works better with RLS policies
             const { error: rpcError, data: rpcData } = await supabase.rpc(
               "update_member_images",
               {
@@ -666,27 +567,26 @@ export default function PublicJoin() {
               } : null,
               data: rpcData,
             };
-            console.log("📡 RPC Response:", rpcResponse);
             uploadDebugInfo.profilePhoto.rpcResponse = rpcResponse;
 
             if (rpcError) {
-              console.error("❌ PROFILE PHOTO URL UPDATE RPC FAILED:", rpcError);
               uploadDebugInfo.profilePhoto.rpcError = rpcError;
               uploadDebugInfo.profilePhoto.success = false;
               debugErrors.push({ type: "PROFILE_RPC", error: rpcError?.message, code: rpcError?.code });
             } else {
-              console.log("✅ PROFILE PHOTO URL SAVED TO DATABASE:", { rpcData });
               uploadDebugInfo.profilePhoto.success = true;
             }
+          } else {
+            uploadDebugInfo.profilePhoto.success = false;
+            if (uploadError) {
+              debugErrors.push({ type: "PROFILE_UPLOAD", error: uploadError?.message || "Unknown error" });
+            }
           }
-          
-          console.log("=".repeat(60));
         } catch (err) {
-          console.error("❌ PROFILE PHOTO UPLOAD EXCEPTION:", err);
-          console.log("=".repeat(60));
+          uploadDebugInfo.profilePhoto.success = false;
+          debugErrors.push({ type: "PROFILE_EXCEPTION", error: err.message });
         }
       } else {
-        console.log("⚠️ PROFILE PHOTO FILE NOT PROVIDED - skipping upload");
         uploadDebugInfo.profilePhoto.skipped = true;
       }
 

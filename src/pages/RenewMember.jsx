@@ -403,11 +403,16 @@ export default function RenewMember() {
                 >
                   {/* card header */}
                   <div
-                    className={`px-4 py-3 text-center font-bold text-sm ${
-                      isSelected ? "bg-primary text-white" : "bg-gray-100 text-white"
+                    className={`px-4 py-3 text-center font-bold text-sm flex items-center justify-center gap-2 ${
+                      isSelected ? "bg-primary text-white" : "bg-gray-100 text-blue-900"
                     }`}
                   >
                     {pkg.title}
+                    {isSelected && (
+                      <svg className="w-5 h-5 text-white flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                      </svg>
+                    )}
                     {pkg.is_student_offer && (
                       <span className="ml-2 inline-flex px-2 py-0.5 rounded-full text-[10px] bg-yellow-400 text-yellow-900 border border-yellow-500/30 shadow-sm">
                         Students Offer
@@ -431,21 +436,28 @@ export default function RenewMember() {
                             }`}
                           >
                             <div className="flex flex-col">
-                              <span className="text-sm font-medium">
-                                {v.pricing_type === "duration" && (
-                                  <>
-                                    {v.duration_value}{" "}
-                                    {v.duration_unit === "month" ? "Month" : "Year"}
-                                    {v.duration_value > 1 ? "s" : ""}
-                                  </>
+                              <div className="flex items-center gap-2">
+                                {checked && (
+                                  <svg className="w-4 h-4 text-primary flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                  </svg>
                                 )}
-                                {v.pricing_type === "sessions" && (
-                                  <>
-                                    {v.duration_value} Month{v.duration_value > 1 ? "s" : ""} ·{" "}
-                                    {v.weekly_days} days/week · {v.sessions_total} Sessions
-                                  </>
-                                )}
-                              </span>
+                                <span className="text-sm font-medium">
+                                  {v.pricing_type === "duration" && (
+                                    <>
+                                      {v.duration_value}{" "}
+                                      {v.duration_unit === "month" ? "Month" : "Year"}
+                                      {v.duration_value > 1 ? "s" : ""}
+                                    </>
+                                  )}
+                                  {v.pricing_type === "sessions" && (
+                                    <>
+                                      {v.duration_value} Month{v.duration_value > 1 ? "s" : ""} ·{" "}
+                                      {v.weekly_days} days/week · {v.sessions_total} Sessions
+                                    </>
+                                  )}
+                                </span>
+                              </div>
                               <span className="text-sm font-semibold text-white">₹{v.price}</span>
                             </div>
                             <input

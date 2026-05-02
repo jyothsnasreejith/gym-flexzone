@@ -138,6 +138,7 @@ export default function ReportsExpired() {
                 <th className="px-6 py-3 text-left">Member</th>
                 <th className="px-6 py-3 text-left">Phone</th>
                 <th className="px-6 py-3 text-left">Expiry</th>
+                <th className="px-6 py-3 text-left">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y">
@@ -168,8 +169,15 @@ export default function ReportsExpired() {
                   <tr key={m.id} className="hover:bg-slate-800/50">
                     <td className="px-6 py-3 font-medium">{m.full_name}</td>
                     <td className="px-6 py-3">{m.phone || "�"}</td>
-                    <td className="px-6 py-3">{formatDate(m.expiry_date)}</td>
-                  </tr>
+                    <td className="px-6 py-3">{formatDate(m.expiry_date)}</td>                    <td className="px-6 py-3">
+                      <button
+                        type="button"
+                        onClick={() => navigate(`/renew/${m.id}`)}
+                        className="px-3 py-1.5 text-xs font-semibold bg-primary text-white rounded-md hover:bg-primary/90 transition-colors"
+                      >
+                        Renew
+                      </button>
+                    </td>                  </tr>
                 ))}
             </tbody>
           </table>

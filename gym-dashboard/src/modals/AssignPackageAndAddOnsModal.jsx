@@ -426,7 +426,14 @@ export default function AssignPackageAndAddOnsModal({ isOpen, onClose, memberId,
                     }`}
                   >
                     <div className="flex items-center justify-between">
-                      <div className="font-semibold text-sm">{t.title}</div>
+                      <div className="flex items-center gap-2">
+                        {String(selectedVariantId) === String(t.id) && (
+                          <svg className="w-5 h-5 text-primary flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                          </svg>
+                        )}
+                        <div className="font-semibold text-sm">{t.title}</div>
+                      </div>
                       {String(selectedVariantId) === String(t.id) && (
                         <span className="text-[10px] font-bold bg-primary text-white px-2 py-0.5 rounded-full uppercase tracking-wider">Selected</span>
                       )}
@@ -466,7 +473,7 @@ export default function AssignPackageAndAddOnsModal({ isOpen, onClose, memberId,
                       </div>
                       <div className="flex-1">
                         <div className="flex items-center justify-between">
-                          <div className="text-sm font-bold text-gray-900">{ao.name}</div>
+                          <div className="text-sm font-bold text-blue-900">{ao.name}</div>
                           {isSelected && (
                             <span className="text-[10px] font-bold bg-primary text-white px-2 py-0.5 rounded-full uppercase tracking-wider">Selected</span>
                           )}

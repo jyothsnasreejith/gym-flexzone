@@ -360,55 +360,47 @@ export default function Fees() {
     let addOnDuration = "";
     let addOnItems = [];
     
-    // First fetch member_add_ons to get the add_on_ids
-    const { data: addOnRows, error: addOnError } = await supabase
-      .from("member_add_ons")
-      .select("add_on_id")
+    // Fetch bills to extract addon information
+    const { data: memberBills, error: billsError } = await supabase
+      .from("bills")
+      .select("*")
       .eq("member_id", memberId);
 
-    console.log(`[DEBUG Fees] Member ${memberId} addOnRows:`, addOnRows, "Error:", addOnError);
+    if (!billsError && Array.isArray(memberBills) && memberBills.length > 0) {
+      // Find addon bills, excluding "Admin Added" entries
+      const addonBills = memberBills.filter(bill => 
+        (bill.bill_type === "add_on" || (bill.notes && bill.notes.includes("Days"))) &&
+        (!bill.notes || !bill.notes.includes("Admin Added"))
+      );
 
-    if (!addOnError && Array.isArray(addOnRows) && addOnRows.length > 0) {
-      const addOnIds = addOnRows.map(r => String(r.add_on_id));
-      console.log(`[DEBUG Fees] addOnIds to fetch:`, addOnIds);
-      
-      // Then fetch the add_on details
-      const { data: addOnDetails, error: addOnDetailsError } = await supabase
-        .from("add_ons")
-        .select("id, name, amount, duration_value, duration_unit")
-        .in("id", addOnIds);
+      if (addonBills.length > 0) {
+        // Extract addon names from notes
+        const notesSet = new Set();
 
-      console.log(`[DEBUG Fees] addOnDetails:`, addOnDetails, "Error:", addOnDetailsError);
+        addonBills.forEach(bill => {
+          if (bill.notes) {
+            // notes typically contain addon name like "6 Days P T 24 CLASS"
+            notesSet.add(bill.notes);
+          }
+        });
 
-      if (!addOnDetailsError && Array.isArray(addOnDetails)) {
-        addOnItems = addOnDetails.map((ao) => ({
-          name: ao.name,
-          amount: ao.amount,
-          duration_value: ao.duration_value,
-          duration_unit: ao.duration_unit,
+        addOnNames = Array.from(notesSet);
+
+        // Create addon items from bills
+        addOnItems = addonBills.map((bill, idx) => ({
+          name: bill.notes || `Add-on ${idx + 1}`,
+          amount: bill.base_amount,
+          duration_value: null,
+          duration_unit: null,
         }));
 
-        console.log(`[DEBUG Fees] Processed addOnItems:`, addOnItems);
-
-        addOnNames = [...new Set(addOnItems.map((item) => item.name))];
         addOnTotal = addOnItems.reduce(
           (sum, item) => sum + Number(item.amount || 0),
           0
         );
-
-        const durationLabels = addOnItems
-          .map((item) =>
-            item.duration_value && item.duration_unit
-              ? `${item.duration_value} ${item.duration_unit}`
-              : null
-          )
-          .filter(Boolean);
-        addOnDuration = [...new Set(durationLabels)].join(", ");
-      } else {
-        console.warn(`[DEBUG Fees] Failed to fetch addon details:`, addOnDetailsError);
+        
+        addOnDuration = "Custom"; // Since we're getting from bills, use generic duration
       }
-    } else {
-      console.log(`[DEBUG Fees] No addons found or error:`, addOnError);
     }
 
     if (data?.package_variants) {

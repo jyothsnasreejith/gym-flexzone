@@ -1678,18 +1678,13 @@ export default function MemberForm({
                 >
                   {/* CARD HEADER */}
                   <div
-                    className={`p-4 border-b text-center font-bold flex items-center justify-center gap-2
+                    className={`p-4 border-b text-center font-bold
                 ${isSelected
                         ? "bg-primary text-white border-primary"
                         : "bg-gray-100 text-gray-600"
                       }`}
                   >
-                    {isSelected && (
-                      <svg className="w-5 h-5 text-white flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                      </svg>
-                    )}
-                    <span>{pkg.title}</span>
+                    {pkg.title}
                     {pkg.is_student_offer && (
                       <span className="ml-2 inline-flex px-2 py-0.5 rounded-full text-[10px] bg-yellow-400 text-yellow-900 border border-yellow-500/30 shadow-sm animate-pulse-subtle">
                         Students Offer
@@ -1713,23 +1708,30 @@ export default function MemberForm({
                               }`}
                           >
                             <div className="flex flex-col">
-                              <span className="text-sm font-medium">
-                                {v.pricing_type === "duration" && (
-                                  <>
-                                    {v.duration_value}{" "}
-                                    {v.duration_unit === "month" ? "Month" : "Year"}
-                                    {v.duration_value > 1 ? "s" : ""}
-                                  </>
+                              <div className="flex items-center gap-2">
+                                {checked && (
+                                  <svg className="w-4 h-4 text-primary flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                  </svg>
                                 )}
+                                <span className="text-sm font-medium">
+                                  {v.pricing_type === "duration" && (
+                                    <>
+                                      {v.duration_value}{" "}
+                                      {v.duration_unit === "month" ? "Month" : "Year"}
+                                      {v.duration_value > 1 ? "s" : ""}
+                                    </>
+                                  )}
 
-                                {v.pricing_type === "sessions" && (
-                                  <>
-                                    {v.duration_value} Month{v.duration_value > 1 ? "s" : ""} ·{" "}
-                                    {v.weekly_days} days/week ·{" "}
-                                    {v.sessions_total} Sessions
-                                  </>
-                                )}
-                              </span>
+                                  {v.pricing_type === "sessions" && (
+                                    <>
+                                      {v.duration_value} Month{v.duration_value > 1 ? "s" : ""} ·{" "}
+                                      {v.weekly_days} days/week ·{" "}
+                                      {v.sessions_total} Sessions
+                                    </>
+                                  )}
+                                </span>
+                              </div>
 
                               <span className="text-sm font-semibold">
                                 ₹{v.price}
@@ -1848,7 +1850,14 @@ export default function MemberForm({
                           }`}
                       >
                         <div className="flex flex-col">
-                          <span className="text-sm font-medium text-blue-900">{addon.name}</span>
+                          <div className="flex items-center gap-2">
+                            {checked && (
+                              <svg className="w-4 h-4 text-primary flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                              </svg>
+                            )}
+                            <span className="text-sm font-medium text-blue-900">{addon.name}</span>
+                          </div>
                           <span className="text-xs text-gray-500">
                             {addon.duration_value} {addon.duration_unit} · ₹
                             {Number(addon.amount || 0).toFixed(2)}

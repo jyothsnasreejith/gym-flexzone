@@ -9,6 +9,12 @@ export default function PublicJoin() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [debugData, setDebugData] = useState({
+    payload: null,
+    uploadInfo: {},
+    errors: [],
+    member: null,
+  });
 
   /* =====================
      LOAD PACKAGES ONLY
@@ -115,6 +121,13 @@ export default function PublicJoin() {
     if (submitting) return null;
     setSubmitting(true);
     setError("");
+    
+    // Initialize debug storage
+    const uploadDebugInfo = {
+      idProof: { attempts: [], errors: [], success: false, url: null, rpcError: null },
+      profilePhoto: { attempts: [], errors: [], success: false, url: null, rpcError: null },
+    };
+    const debugErrors = [];
 
     try {
       const package_variant_id = form.package_variant_id ?? null;
@@ -363,52 +376,59 @@ export default function PublicJoin() {
           console.log("=".repeat(60));
           
           let uploadFile = idProofFile;
-          
-          console.log("📄 Initial ID Proof File:", {
+          const fileInfo = {
             name: idProofFile.name,
             size: `${(idProofFile.size / 1024 / 1024).toFixed(2)}MB`,
             type: idProofFile.type,
-            instanceof_File: idProofFile instanceof File,
-            instanceof_Blob: idProofFile instanceof Blob,
-          });
+          };
+          
+          console.log("📄 Initial ID Proof File:", fileInfo);
+          uploadDebugInfo.idProof.originalFile = fileInfo;
           
           // Compress if image
           if (idProofFile.type?.startsWith("image/")) {
             console.log("📦 Compressing ID proof image...");
             uploadFile = await compressImage(idProofFile);
-            console.log("✅ Compression complete:", {
+            const compressedInfo = {
               newSize: `${(uploadFile.size / 1024 / 1024).toFixed(2)}MB`,
               newType: uploadFile.type,
-            });
+            };
+            console.log("✅ Compression complete:", compressedInfo);
+            uploadDebugInfo.idProof.compressed = compressedInfo;
           } else {
             console.log("⏭️ Skipping compression for non-image:", idProofFile.type);
+            uploadDebugInfo.idProof.compressed = { skipped: true, reason: "not-image" };
           }
           
           const ext = uploadFile.name.split(".").pop();
           const fileName = `id-proof-${member.id}.${ext}`;
           
-          console.log("📤 STORAGE UPLOAD - ATTEMPT 1/3:", {
+          const uploadStartInfo = {
             fileName,
             fileSize: `${(uploadFile.size / 1024).toFixed(1)}KB`,
             fileType: uploadFile.type,
             memberId: member.id,
             bucketName: "id-proofs",
-          });
+          };
+          console.log("📤 STORAGE UPLOAD - ATTEMPT 1/3:", uploadStartInfo);
+          uploadDebugInfo.idProof.uploadStart = uploadStartInfo;
 
           // Upload with explicit retry
           let uploadError = null;
           let uploadSuccess = false;
           let retries = 3;
+          let attemptCount = 0;
           
           while (retries > 0) {
-            console.log(`\n🔄 Upload attempt ${4 - retries}/3...`);
+            attemptCount++;
+            console.log(`\n🔄 Upload attempt ${attemptCount}/3...`);
             
             try {
               const result = await supabase.storage
                 .from("id-proofs")
                 .upload(fileName, uploadFile, { upsert: true });
               
-              console.log("📡 Storage API Response:", {
+              const apiResponse = {
                 hasError: !!result.error,
                 hasData: !!result.data,
                 error: result.error ? {
@@ -416,7 +436,9 @@ export default function PublicJoin() {
                   code: result.error.code,
                   status: result.error.status,
                 } : null,
-              });
+              };
+              console.log("📡 Storage API Response:", apiResponse);
+              uploadDebugInfo.idProof.attempts.push({ attempt: attemptCount, response: apiResponse });
               
               if (!result.error) {
                 uploadError = null;
@@ -427,6 +449,7 @@ export default function PublicJoin() {
               
               uploadError = result.error;
               retries--;
+              uploadDebugInfo.idProof.errors.push(uploadError);
               
               if (retries > 0) {
                 console.warn(`⏳ Retrying in 1 second... (${retries} retries left)`);
@@ -436,6 +459,8 @@ export default function PublicJoin() {
               console.error("💥 Upload catch error:", catchErr);
               uploadError = catchErr;
               retries--;
+              uploadDebugInfo.idProof.errors.push({ catchError: catchErr.message });
+              debugErrors.push({ type: "ID_PROOF_CATCH", error: catchErr.message });
               
               if (retries > 0) {
                 console.warn(`⏳ Retrying in 1 second... (${retries} retries left)`);
@@ -446,6 +471,8 @@ export default function PublicJoin() {
 
           if (uploadError) {
             console.error("❌ ID PROOF STORAGE UPLOAD FAILED:", uploadError);
+            uploadDebugInfo.idProof.success = false;
+            debugErrors.push({ type: "ID_PROOF_UPLOAD", error: uploadError?.message || "Unknown error" });
           } else if (uploadSuccess) {
             console.log("🔗 Getting public URL...");
             const { data: urlData } = supabase.storage
@@ -456,6 +483,7 @@ export default function PublicJoin() {
               publicUrl: urlData.publicUrl,
               urlLength: urlData.publicUrl?.length,
             });
+            uploadDebugInfo.idProof.url = urlData.publicUrl;
 
             console.log("🔄 Calling update_member_images RPC function...");
             
@@ -468,7 +496,7 @@ export default function PublicJoin() {
               }
             );
 
-            console.log("📡 RPC Response:", {
+            const rpcResponse = {
               hasError: !!rpcError,
               hasData: !!rpcData,
               error: rpcError ? {
@@ -477,22 +505,31 @@ export default function PublicJoin() {
                 status: rpcError.status,
               } : null,
               data: rpcData,
-            });
+            };
+            console.log("📡 RPC Response:", rpcResponse);
+            uploadDebugInfo.idProof.rpcResponse = rpcResponse;
 
             if (rpcError) {
               console.error("❌ ID PROOF URL UPDATE RPC FAILED:", rpcError);
+              uploadDebugInfo.idProof.rpcError = rpcError;
+              uploadDebugInfo.idProof.success = false;
+              debugErrors.push({ type: "ID_PROOF_RPC", error: rpcError?.message, code: rpcError?.code });
             } else {
               console.log("✅ ID PROOF URL SAVED TO DATABASE:", { rpcData });
+              uploadDebugInfo.idProof.success = true;
             }
           }
           
           console.log("=".repeat(60));
         } catch (err) {
           console.error("❌ ID PROOF UPLOAD EXCEPTION:", err);
+          uploadDebugInfo.idProof.success = false;
+          debugErrors.push({ type: "ID_PROOF_EXCEPTION", error: err.message });
           console.log("=".repeat(60));
         }
       } else {
         console.log("⚠️ ID PROOF FILE NOT PROVIDED - skipping upload");
+        uploadDebugInfo.idProof.skipped = true;
       }
 
       // Upload Profile Photo with retry logic and aggressive compression
@@ -503,48 +540,54 @@ export default function PublicJoin() {
           console.log("=".repeat(60));
           
           let uploadFile = photoFile;
-          
-          console.log("📸 Initial Profile Photo File:", {
+          const fileInfo = {
             name: photoFile.name,
             size: `${(photoFile.size / 1024 / 1024).toFixed(2)}MB`,
             type: photoFile.type,
-            instanceof_File: photoFile instanceof File,
-            instanceof_Blob: photoFile instanceof Blob,
-          });
+          };
+          
+          console.log("📸 Initial Profile Photo File:", fileInfo);
+          uploadDebugInfo.profilePhoto.originalFile = fileInfo;
           
           // Always compress profile photos aggressively
           console.log("📦 Compressing profile photo...");
           uploadFile = await compressImage(photoFile);
-          console.log("✅ Compression complete:", {
+          const compressedInfo = {
             newSize: `${(uploadFile.size / 1024 / 1024).toFixed(2)}MB`,
             newType: uploadFile.type,
-          });
+          };
+          console.log("✅ Compression complete:", compressedInfo);
+          uploadDebugInfo.profilePhoto.compressed = compressedInfo;
 
           const ext = uploadFile.name.split(".").pop();
           const fileName = `member-${member.id}.${ext}`;
           
-          console.log("📤 STORAGE UPLOAD - ATTEMPT 1/3:", {
+          const uploadStartInfo = {
             fileName,
             fileSize: `${(uploadFile.size / 1024).toFixed(1)}KB`,
             fileType: uploadFile.type,
             memberId: member.id,
             bucketName: "member-avatars",
-          });
+          };
+          console.log("📤 STORAGE UPLOAD - ATTEMPT 1/3:", uploadStartInfo);
+          uploadDebugInfo.profilePhoto.uploadStart = uploadStartInfo;
 
           // Upload with explicit retry
           let uploadError = null;
           let uploadSuccess = false;
           let retries = 3;
+          let attemptCount = 0;
           
           while (retries > 0) {
-            console.log(`\n🔄 Upload attempt ${4 - retries}/3...`);
+            attemptCount++;
+            console.log(`\n🔄 Upload attempt ${attemptCount}/3...`);
             
             try {
               const result = await supabase.storage
                 .from("member-avatars")
                 .upload(fileName, uploadFile, { upsert: true });
               
-              console.log("📡 Storage API Response:", {
+              const apiResponse = {
                 hasError: !!result.error,
                 hasData: !!result.data,
                 error: result.error ? {
@@ -552,7 +595,9 @@ export default function PublicJoin() {
                   code: result.error.code,
                   status: result.error.status,
                 } : null,
-              });
+              };
+              console.log("📡 Storage API Response:", apiResponse);
+              uploadDebugInfo.profilePhoto.attempts.push({ attempt: attemptCount, response: apiResponse });
               
               if (!result.error) {
                 uploadError = null;
@@ -563,6 +608,7 @@ export default function PublicJoin() {
               
               uploadError = result.error;
               retries--;
+              uploadDebugInfo.profilePhoto.errors.push(uploadError);
               
               if (retries > 0) {
                 console.warn(`⏳ Retrying in 1 second... (${retries} retries left)`);
@@ -572,6 +618,8 @@ export default function PublicJoin() {
               console.error("💥 Upload catch error:", catchErr);
               uploadError = catchErr;
               retries--;
+              uploadDebugInfo.profilePhoto.errors.push({ catchError: catchErr.message });
+              debugErrors.push({ type: "PROFILE_CATCH", error: catchErr.message });
               
               if (retries > 0) {
                 console.warn(`⏳ Retrying in 1 second... (${retries} retries left)`);
@@ -582,6 +630,8 @@ export default function PublicJoin() {
 
           if (uploadError) {
             console.error("❌ PROFILE PHOTO STORAGE UPLOAD FAILED:", uploadError);
+            uploadDebugInfo.profilePhoto.success = false;
+            debugErrors.push({ type: "PROFILE_UPLOAD", error: uploadError?.message || "Unknown error" });
           } else if (uploadSuccess) {
             console.log("🔗 Getting public URL...");
             const { data: urlData } = supabase.storage
@@ -592,6 +642,7 @@ export default function PublicJoin() {
               publicUrl: urlData.publicUrl,
               urlLength: urlData.publicUrl?.length,
             });
+            uploadDebugInfo.profilePhoto.url = urlData.publicUrl;
 
             console.log("🔄 Calling update_member_images RPC function...");
             
@@ -604,7 +655,7 @@ export default function PublicJoin() {
               }
             );
 
-            console.log("📡 RPC Response:", {
+            const rpcResponse = {
               hasError: !!rpcError,
               hasData: !!rpcData,
               error: rpcError ? {
@@ -613,25 +664,40 @@ export default function PublicJoin() {
                 status: rpcError.status,
               } : null,
               data: rpcData,
-            });
+            };
+            console.log("📡 RPC Response:", rpcResponse);
+            uploadDebugInfo.profilePhoto.rpcResponse = rpcResponse;
 
             if (rpcError) {
               console.error("❌ PROFILE PHOTO URL UPDATE RPC FAILED:", rpcError);
+              uploadDebugInfo.profilePhoto.rpcError = rpcError;
+              uploadDebugInfo.profilePhoto.success = false;
+              debugErrors.push({ type: "PROFILE_RPC", error: rpcError?.message, code: rpcError?.code });
             } else {
               console.log("✅ PROFILE PHOTO URL SAVED TO DATABASE:", { rpcData });
+              uploadDebugInfo.profilePhoto.success = true;
             }
           }
           
           console.log("=".repeat(60));
         } catch (err) {
           console.error("❌ PROFILE PHOTO UPLOAD EXCEPTION:", err);
+          uploadDebugInfo.profilePhoto.success = false;
+          debugErrors.push({ type: "PROFILE_EXCEPTION", error: err.message });
           console.log("=".repeat(60));
         }
       } else {
         console.log("⚠️ PROFILE PHOTO FILE NOT PROVIDED - skipping upload");
+        uploadDebugInfo.profilePhoto.skipped = true;
       }
 
       setSubmitted(true);
+      setDebugData({
+        payload,
+        uploadInfo: uploadDebugInfo,
+        errors: debugErrors,
+        member: member,
+      });
       return member;
     } finally {
       setSubmitting(false);
@@ -647,19 +713,189 @@ export default function PublicJoin() {
 
   if (submitted) {
     return (
-      <div className="min-h-[60vh] flex items-center justify-center px-4">
-        <div className="max-w-md w-full bg-card rounded-2xl shadow p-6 text-center space-y-4">
-          <div className="text-4xl">🎉</div>
+      <div className="min-h-screen bg-background p-4 py-8">
+        <div className="max-w-2xl mx-auto space-y-4">
+          {/* Thank You Section */}
+          <div className="bg-card rounded-2xl shadow p-6 text-center space-y-3">
+            <div className="text-4xl">🎉</div>
+            <h2 className="text-2xl font-bold text-primary">
+              Thank you for registering!
+            </h2>
+            <p className="text-sm text-secondary">
+              Our team will contact you shortly.
+            </p>
+          </div>
 
-          <h2 className="text-2xl font-bold">
-            Thank you for registering!
-          </h2>
+          {/* Member ID */}
+          {debugData.member && (
+            <div className="bg-card rounded-lg p-4 border border-border">
+              <p className="text-xs text-secondary mb-2">Member ID</p>
+              <p className="font-mono text-sm break-all text-primary">{debugData.member.id}</p>
+            </div>
+          )}
 
-          <p className="text-sm text-secondary">
-            Our team will contact you shortly.
-          </p>
+          {/* Upload Status Summary */}
+          <div className="bg-card rounded-lg p-4 border border-border space-y-2">
+            <h3 className="font-semibold text-sm text-primary">📤 Upload Status</h3>
+            
+            <div className="space-y-2 text-xs">
+              {/* ID Proof */}
+              <div className="flex items-start gap-2">
+                <span className="text-lg flex-shrink-0">
+                  {debugData.uploadInfo.idProof?.skipped ? "⏭️" : 
+                   debugData.uploadInfo.idProof?.success ? "✅" : "❌"}
+                </span>
+                <div className="flex-1">
+                  <p className="font-mono font-semibold">ID Proof</p>
+                  {debugData.uploadInfo.idProof?.originalFile && (
+                    <p className="text-secondary">{debugData.uploadInfo.idProof.originalFile.name} ({debugData.uploadInfo.idProof.originalFile.size})</p>
+                  )}
+                  {debugData.uploadInfo.idProof?.compressed && !debugData.uploadInfo.idProof?.compressed?.skipped && (
+                    <p className="text-secondary">→ {debugData.uploadInfo.idProof.compressed.newSize}</p>
+                  )}
+                  {debugData.uploadInfo.idProof?.url && (
+                    <p className="text-green-600 text-xs break-all">URL: {debugData.uploadInfo.idProof.url.substring(0, 60)}...</p>
+                  )}
+                </div>
+              </div>
 
-          <p className="text-xs text-gray-400">
+              {/* Profile Photo */}
+              <div className="flex items-start gap-2">
+                <span className="text-lg flex-shrink-0">
+                  {debugData.uploadInfo.profilePhoto?.skipped ? "⏭️" : 
+                   debugData.uploadInfo.profilePhoto?.success ? "✅" : "❌"}
+                </span>
+                <div className="flex-1">
+                  <p className="font-mono font-semibold">Profile Photo</p>
+                  {debugData.uploadInfo.profilePhoto?.originalFile && (
+                    <p className="text-secondary">{debugData.uploadInfo.profilePhoto.originalFile.name} ({debugData.uploadInfo.profilePhoto.originalFile.size})</p>
+                  )}
+                  {debugData.uploadInfo.profilePhoto?.compressed && (
+                    <p className="text-secondary">→ {debugData.uploadInfo.profilePhoto.compressed.newSize}</p>
+                  )}
+                  {debugData.uploadInfo.profilePhoto?.url && (
+                    <p className="text-green-600 text-xs break-all">URL: {debugData.uploadInfo.profilePhoto.url.substring(0, 60)}...</p>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Error Details (if any) */}
+          {debugData.errors.length > 0 && (
+            <div className="bg-card rounded-lg p-4 border border-red-500/30 space-y-2">
+              <h3 className="font-semibold text-sm text-red-600">❌ Errors Encountered</h3>
+              <div className="space-y-2 text-xs font-mono">
+                {debugData.errors.map((err, idx) => (
+                  <div key={idx} className="bg-background rounded p-2 text-red-500">
+                    <p className="font-semibold">{err.type}</p>
+                    <p className="break-words">{err.error}</p>
+                    {err.code && <p className="text-red-600">Code: {err.code}</p>}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* ID Proof Upload Details */}
+          {debugData.uploadInfo.idProof?.attempts.length > 0 && (
+            <div className="bg-card rounded-lg p-4 border border-border space-y-2">
+              <h3 className="font-semibold text-sm text-primary">📄 ID Proof Upload Attempts</h3>
+              <div className="space-y-2">
+                {debugData.uploadInfo.idProof.attempts.map((attempt, idx) => (
+                  <div key={idx} className="bg-background rounded p-2 text-xs">
+                    <p className="font-semibold text-secondary">Attempt {attempt.attempt}</p>
+                    <p className="font-mono text-primary">
+                      {attempt.response.hasError ? "❌ Error" : "✅ Success"}
+                    </p>
+                    {attempt.response.error && (
+                      <div className="text-red-500 mt-1 break-words">
+                        <p>{attempt.response.error.message}</p>
+                        <p className="text-xs">Code: {attempt.response.error.code} (Status: {attempt.response.error.status})</p>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+              {debugData.uploadInfo.idProof?.rpcResponse && (
+                <div className="bg-background rounded p-2 text-xs mt-2">
+                  <p className="font-semibold text-secondary">RPC Update</p>
+                  <p className="font-mono text-primary">
+                    {debugData.uploadInfo.idProof.rpcResponse.hasError ? "❌ Error" : "✅ Success"}
+                  </p>
+                  {debugData.uploadInfo.idProof.rpcResponse.error && (
+                    <div className="text-red-500 mt-1 break-words">
+                      <p>{debugData.uploadInfo.idProof.rpcResponse.error.message}</p>
+                      <p className="text-xs">Code: {debugData.uploadInfo.idProof.rpcResponse.error.code}</p>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Profile Photo Upload Details */}
+          {debugData.uploadInfo.profilePhoto?.attempts.length > 0 && (
+            <div className="bg-card rounded-lg p-4 border border-border space-y-2">
+              <h3 className="font-semibold text-sm text-primary">📸 Profile Photo Upload Attempts</h3>
+              <div className="space-y-2">
+                {debugData.uploadInfo.profilePhoto.attempts.map((attempt, idx) => (
+                  <div key={idx} className="bg-background rounded p-2 text-xs">
+                    <p className="font-semibold text-secondary">Attempt {attempt.attempt}</p>
+                    <p className="font-mono text-primary">
+                      {attempt.response.hasError ? "❌ Error" : "✅ Success"}
+                    </p>
+                    {attempt.response.error && (
+                      <div className="text-red-500 mt-1 break-words">
+                        <p>{attempt.response.error.message}</p>
+                        <p className="text-xs">Code: {attempt.response.error.code} (Status: {attempt.response.error.status})</p>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+              {debugData.uploadInfo.profilePhoto?.rpcResponse && (
+                <div className="bg-background rounded p-2 text-xs mt-2">
+                  <p className="font-semibold text-secondary">RPC Update</p>
+                  <p className="font-mono text-primary">
+                    {debugData.uploadInfo.profilePhoto.rpcResponse.hasError ? "❌ Error" : "✅ Success"}
+                  </p>
+                  {debugData.uploadInfo.profilePhoto.rpcResponse.error && (
+                    <div className="text-red-500 mt-1 break-words">
+                      <p>{debugData.uploadInfo.profilePhoto.rpcResponse.error.message}</p>
+                      <p className="text-xs">Code: {debugData.uploadInfo.profilePhoto.rpcResponse.error.code}</p>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Member Registration Data */}
+          {debugData.payload && (
+            <details className="bg-card rounded-lg p-4 border border-border">
+              <summary className="font-semibold text-sm text-primary cursor-pointer hover:text-accent">
+                📋 Registration Data (tap to expand)
+              </summary>
+              <pre className="mt-3 text-xs font-mono overflow-auto bg-background rounded p-3 text-secondary max-h-96">
+                {JSON.stringify(debugData.payload, null, 2)}
+              </pre>
+            </details>
+          )}
+
+          {/* Instructions */}
+          <div className="bg-card rounded-lg p-4 border border-border space-y-2">
+            <h3 className="font-semibold text-sm text-primary">🔍 Debugging Tips</h3>
+            <ul className="text-xs text-secondary space-y-1 list-disc list-inside">
+              <li>✅ = Success, ❌ = Error, ⏭️ = Skipped</li>
+              <li>Check "Upload Status" for which step failed</li>
+              <li>Red error codes indicate the exact issue</li>
+              <li>Open DevTools Console (F12) to see detailed logs</li>
+              <li>Share error codes with support team</li>
+            </ul>
+          </div>
+
+          <p className="text-xs text-secondary text-center pt-2">
             You may safely close this page.
           </p>
         </div>

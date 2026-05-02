@@ -956,9 +956,11 @@ export default function Members() {
                 <table className="w-full text-left text-sm">
                   <thead className="border-b border-secondary-blue">
                     <tr>
-                      <th className="pb-4 text-xs font-bold text-secondary uppercase tracking-wider">Bill Type</th>
+                      <th className="pb-4 text-xs font-bold text-secondary uppercase tracking-wider">Invoice Number</th>
                       <th className="pb-4 text-xs font-bold text-secondary uppercase tracking-wider">Date</th>
                       <th className="pb-4 text-xs font-bold text-secondary uppercase tracking-wider">Description</th>
+                      <th className="pb-4 text-xs font-bold text-secondary uppercase tracking-wider text-right">Total</th>
+                      <th className="pb-4 text-xs font-bold text-secondary uppercase tracking-wider text-right">Discount</th>
                       <th className="pb-4 text-xs font-bold text-secondary uppercase tracking-wider text-right">Paid Amount</th>
                       <th className="pb-4 text-xs font-bold text-secondary uppercase tracking-wider text-right">Status</th>
                     </tr>
@@ -971,6 +973,8 @@ export default function Members() {
                       const payableAmount = bill.isMerged
                         ? Number(bill.mergedPayable || 0)
                         : Number(bill.payable || 0);
+                      const baseAmount = Number(bill.base_amount || 0);
+                      const discountAmount = Number(bill.discount_amount || 0);
                       const status = bill.status || (paidAmount >= payableAmount && payableAmount > 0
                         ? "paid"
                         : paidAmount > 0
@@ -979,12 +983,18 @@ export default function Members() {
 
                       return (
                         <tr key={`${bill.id || "row"}-${idx}`}>
-                          <td className="py-4 text-sm font-medium capitalize text-white">
-                            {bill.isMerged ? "combined" : (bill.bill_type || "—")}
+                          <td className="py-4 text-sm font-medium text-white">
+                            {bill.invoice_no || `INV${bill.id}` || "—"}
                           </td>
                           <td className="py-4 text-sm text-secondary">{formatDate(bill.billing_date || bill.due_date)}</td>
                           <td className="py-4 text-sm text-white">
                             {bill.mergedTitles || bill.packages?.[0]?.title || bill.packages?.title || bill.notes || "Payment"}
+                          </td>
+                          <td className="py-4 text-sm font-bold text-right text-white">
+                            Rs.{baseAmount.toFixed(2)}
+                          </td>
+                          <td className="py-4 text-sm font-bold text-right text-white">
+                            Rs.{discountAmount.toFixed(2)}
                           </td>
                           <td className="py-4 text-sm font-bold text-right text-white">
                             Rs.{paidAmount.toFixed(2)}
@@ -1005,7 +1015,7 @@ export default function Members() {
                     })}
                     {displayBills.length === 0 && (
                       <tr>
-                        <td colSpan={5} className="py-6 text-center text-secondary">No payment history found.</td>
+                        <td colSpan={7} className="py-6 text-center text-secondary">No payment history found.</td>
                       </tr>
                     )}
                   </tbody>

@@ -12,6 +12,7 @@ DROP FUNCTION IF EXISTS public.update_member_images(BIGINT, TEXT, TEXT);
 -- Create function to update member image URLs
 -- This allows anon role to update image URLs after successful upload
 -- Updated to accept BIGINT member ID (not UUID)
+-- SECURITY DEFINER: Function runs with owner permissions, bypassing RLS policies
 CREATE OR REPLACE FUNCTION public.update_member_images(
   p_member_id BIGINT,
   p_profile_image_url TEXT DEFAULT NULL,
@@ -48,7 +49,7 @@ BEGIN
       ELSE 'No updates made'
     END;
 END;
-$$ LANGUAGE plpgsql SECURITY INVOKER;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- Grant execution permission to anon role
 GRANT EXECUTE ON FUNCTION public.update_member_images(BIGINT, TEXT, TEXT) TO anon, authenticated, service_role;

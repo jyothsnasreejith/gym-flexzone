@@ -9,6 +9,8 @@ DROP FUNCTION IF EXISTS public.update_member_images(UUID, TEXT, TEXT);
 DROP FUNCTION IF EXISTS public.update_member_images(BIGINT, TEXT, TEXT);
 
 -- Step 3: Create corrected function accepting BIGINT member_id
+-- SECURITY DEFINER: Function runs with owner permissions, bypassing RLS policies
+-- This allows anon users to update image URLs even though RLS blocks direct updates
 CREATE OR REPLACE FUNCTION public.update_member_images(
   p_member_id BIGINT,
   p_profile_image_url TEXT DEFAULT NULL,
@@ -45,7 +47,7 @@ BEGIN
       ELSE 'No updates made'
     END;
 END;
-$$ LANGUAGE plpgsql SECURITY INVOKER;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- Step 4: Grant execute permissions
 GRANT EXECUTE ON FUNCTION public.update_member_images(BIGINT, TEXT, TEXT) TO anon, authenticated, service_role, public;

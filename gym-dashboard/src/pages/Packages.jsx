@@ -279,7 +279,7 @@ const Packages = () => {
                                 </span>
                               )}
                             </span>
-                            <span className="text-sm font-bold text-white">
+                            <span className="text-sm font-bold text-slate-600">
                               ₹{v.price}
                             </span>
                           </div>

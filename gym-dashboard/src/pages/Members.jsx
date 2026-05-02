@@ -959,26 +959,55 @@ export default function Members() {
                       <th className="pb-4 text-xs font-bold text-secondary uppercase tracking-wider">Bill Type</th>
                       <th className="pb-4 text-xs font-bold text-secondary uppercase tracking-wider">Date</th>
                       <th className="pb-4 text-xs font-bold text-secondary uppercase tracking-wider">Description</th>
-                      <th className="pb-4 text-xs font-bold text-secondary uppercase tracking-wider text-right">Amount</th>
+                      <th className="pb-4 text-xs font-bold text-secondary uppercase tracking-wider text-right">Paid Amount</th>
                       <th className="pb-4 text-xs font-bold text-secondary uppercase tracking-wider text-right">Status</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-secondary-blue">
-                    {bills && bills.slice(0, 5).map((bill, idx) => (
-                      <tr key={idx}>
-                        <td className="py-4 text-sm font-medium capitalize text-white">{bill.bill_type || '—'}</td>
-                        <td className="py-4 text-sm text-secondary">{formatDate(bill.billing_date)}</td>
-                        <td className="py-4 text-sm text-white">{bill.packages?.[0]?.title || bill.packages?.title || 'Payment'}</td>
-                        <td className="py-4 text-sm font-bold text-right text-white">Rs.{Number(bill.payable_amount || 0).toFixed(2)}</td>
-                        <td className="py-4 text-right">
-                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                            bill.payment_status === 'paid' ? 'badge-success' : 'badge-warning'
-                          }`}>
-                            {bill.payment_status === 'paid' ? 'Paid' : 'Pending'}
-                          </span>
-                        </td>
+                    {displayBills.slice(0, 5).map((bill, idx) => {
+                      const paidAmount = bill.isMerged
+                        ? Number(bill.mergedPaid || 0)
+                        : Number(bill.paid || 0);
+                      const payableAmount = bill.isMerged
+                        ? Number(bill.mergedPayable || 0)
+                        : Number(bill.payable || 0);
+                      const status = bill.status || (paidAmount >= payableAmount && payableAmount > 0
+                        ? "paid"
+                        : paidAmount > 0
+                          ? "partial"
+                          : "unpaid");
+
+                      return (
+                        <tr key={`${bill.id || "row"}-${idx}`}>
+                          <td className="py-4 text-sm font-medium capitalize text-white">
+                            {bill.isMerged ? "combined" : (bill.bill_type || "—")}
+                          </td>
+                          <td className="py-4 text-sm text-secondary">{formatDate(bill.billing_date || bill.due_date)}</td>
+                          <td className="py-4 text-sm text-white">
+                            {bill.mergedTitles || bill.packages?.[0]?.title || bill.packages?.title || bill.notes || "Payment"}
+                          </td>
+                          <td className="py-4 text-sm font-bold text-right text-white">
+                            Rs.{paidAmount.toFixed(2)}
+                          </td>
+                          <td className="py-4 text-right">
+                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                              status === "paid"
+                                ? "badge-success"
+                                : status === "partial"
+                                  ? "badge-warning"
+                                  : "bg-slate-700 text-slate-200"
+                            }`}>
+                              {status === "paid" ? "Paid" : status === "partial" ? "Partial" : "Pending"}
+                            </span>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                    {displayBills.length === 0 && (
+                      <tr>
+                        <td colSpan={5} className="py-6 text-center text-secondary">No payment history found.</td>
                       </tr>
-                    ))}
+                    )}
                   </tbody>
                 </table>
               </div>

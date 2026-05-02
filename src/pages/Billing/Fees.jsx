@@ -1166,7 +1166,7 @@ export default function Fees() {
                             paidAmount > 0 ? formatInr(paidAmount) : "�";
 
                           return (
-                            <tr key={bill.id} className={`border-t ${bill.is_current === false ? 'opacity-70 bg-gray-50' : ''}`}>
+                            <tr key={bill.id} className={`border-t ${bill.is_current === false ? 'opacity-70' : ''}`}>
                               <td className="px-4 py-2 text-xs">
                                 {new Date(bill.billing_date || bill.due_date).toLocaleDateString("en-GB")}
                               </td>
@@ -1198,14 +1198,14 @@ export default function Fees() {
                                   <button
                                     onClick={() => openEditModal(bill)}
                                     title="Edit Fee"
-                                    className="p-1 text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                                    className="p-1 text-white hover:bg-blue-50 rounded transition-colors"
                                   >
                                     <span className="material-icons-round text-sm">edit</span>
                                   </button>
                                   <button
                                     onClick={() => openHistoryModal(bill)}
                                     title="View Edit History"
-                                    className="p-1 text-secondary hover:bg-slate-800/30 rounded transition-colors"
+                                    className="p-1 text-white hover:bg-slate-800/30 rounded transition-colors"
                                   >
                                     <span className="material-icons-round text-sm">history</span>
                                   </button>
@@ -1459,39 +1459,39 @@ export default function Fees() {
             <h3 className="text-lg font-bold mb-4">Edit Fee</h3>
             <div className="space-y-4">
               <div>
-                <label className="text-xs font-medium text-secondary">Base Amount (?)</label>
+                <label className="text-xs font-medium text-blue-400">Base Amount (?)</label>
                 <input
                   type="number"
                   value={editData.base_amount}
                   onChange={(e) => setEditData({ ...editData, base_amount: e.target.value })}
-                  className="mt-1 w-full border rounded-lg px-3 py-2 text-sm"
+                  className="mt-1 w-full border rounded-lg px-3 py-2 text-sm bg-blue-900 text-white"
                 />
               </div>
               <div>
-                <label className="text-xs font-medium text-secondary">Discount (?)</label>
+                <label className="text-xs font-medium text-blue-400">Discount (?)</label>
                 <input
                   type="number"
                   value={editData.discount_amount}
                   onChange={(e) => setEditData({ ...editData, discount_amount: e.target.value })}
-                  className="mt-1 w-full border rounded-lg px-3 py-2 text-sm"
+                  className="mt-1 w-full border rounded-lg px-3 py-2 text-sm bg-blue-900 text-white"
                 />
               </div>
               <div>
-                <label className="text-xs font-medium text-secondary">Due Date</label>
+                <label className="text-xs font-medium text-blue-400">Due Date</label>
                 <input
                   type="date"
                   value={editData.due_date}
                   onChange={(e) => setEditData({ ...editData, due_date: e.target.value })}
-                  className="mt-1 w-full border rounded-lg px-3 py-2 text-sm bg-card text-white"
+                  className="mt-1 w-full border rounded-lg px-3 py-2 text-sm bg-blue-900 text-white"
                 />
               </div>
               <div>
-                <label className="text-xs font-medium text-secondary">Amount Paid (?)</label>
+                <label className="text-xs font-medium text-blue-400">Amount Paid (?)</label>
                 <input
                   type="number"
                   value={editData.amount_paid}
                   onChange={(e) => setEditData({ ...editData, amount_paid: e.target.value })}
-                  className="mt-1 w-full border rounded-lg px-3 py-2 text-sm bg-card text-white"
+                  className="mt-1 w-full border rounded-lg px-3 py-2 text-sm bg-blue-900 text-white"
                 />
               </div>
               <div className="p-3 bg-slate-800/50 rounded-lg flex justify-between items-center">
@@ -1504,7 +1504,7 @@ export default function Fees() {
                 <button
                   type="button"
                   onClick={() => setEditData({ ...editData, amount_paid: Math.max(Number(editData.base_amount || 0) - Number(editData.discount_amount || 0), 0) })}
-                  className="text-[10px] font-bold uppercase tracking-wider bg-gray-200 px-2 py-1 rounded hover:bg-gray-300"
+                  className="text-[10px] font-bold uppercase tracking-wider bg-gray-200 px-2 py-1 rounded hover:bg-gray-300 text-blue-600"
                 >
                   Set as Paid
                 </button>

@@ -93,6 +93,7 @@ export default function Dashboard() {
   const [upcomingReminders, setUpcomingReminders] = useState([]);
   const [loadingReminders, setLoadingReminders] = useState(false);
   const [expiredMembers, setExpiredMembers] = useState([]);
+  const [expiredMembersTotal, setExpiredMembersTotal] = useState(0);
   const [loadingExpired, setLoadingExpired] = useState(false);
 
   // Calculate range for REVENUE chart
@@ -589,10 +590,38 @@ export default function Dashboard() {
       try {
         setLoadingExpired(true);
         const today = new Date().toISOString().split('T')[0];
+        const todayDate = new Date();
+        todayDate.setHours(0, 0, 0, 0);
         const now = new Date();
 
-        // 1. Package-expired members
-        const { data: pkgData, error: pkgError } = await withRetry(() =>
+        // Helper to compute expiry date from joining_date
+        const computeExpiryDate = (member) => {
+          const variant = member.package_variants;
+          if (!variant || variant.pricing_type !== "duration") return null;
+
+          const baseDate = member.joining_date || member.created_at;
+          if (!baseDate) return null;
+
+          const start = new Date(baseDate);
+          const unit = variant.duration_unit?.toLowerCase();
+          const value = Number(variant.duration_value || 0);
+          if (!value || !unit) return null;
+
+          const expiry = new Date(start);
+          if (unit === "month") {
+            expiry.setMonth(expiry.getMonth() + value);
+          } else if (unit === "year") {
+            expiry.setFullYear(expiry.getFullYear() + value);
+          } else if (unit === "day" || unit === "days") {
+            expiry.setDate(expiry.getDate() + value);
+          } else {
+            return null;
+          }
+          return expiry.toISOString().slice(0, 10);
+        };
+
+        // 1. Get all members to compute expiry dates
+        const { data: pkgMembers, error: pkgError } = await withRetry(() =>
           supabase
             .from("members")
             .select(`
@@ -601,25 +630,33 @@ export default function Dashboard() {
               phone,
               email,
               end_date,
+              joining_date,
+              created_at,
               package_variants (
                 duration_value,
                 duration_unit,
+                pricing_type,
                 packages (title)
               )
             `)
-            .lt("end_date", today)
-            .not("end_date", "is", null)
-            .order("end_date", { ascending: false })
-            .limit(10)
+            .eq("is_deleted", false)
         );
 
         if (pkgError) throw pkgError;
 
         const memberMap = {};
-        (pkgData || []).forEach(m => {
-          const expiry = new Date(m.end_date);
-          const days = Math.floor((now - expiry) / (1000 * 60 * 60 * 24));
-          memberMap[m.id] = { ...m, daysSinceExpiry: days, expiredAddOns: [] };
+        (pkgMembers || []).forEach(m => {
+          const computedExpiry = computeExpiryDate(m);
+          if (!computedExpiry) return;
+
+          const expDate = new Date(computedExpiry);
+          expDate.setHours(0, 0, 0, 0);
+
+          if (expDate < todayDate) {
+            const expiry = new Date(computedExpiry);
+            const days = Math.floor((now - expiry) / (1000 * 60 * 60 * 24));
+            memberMap[m.id] = { ...m, end_date: computedExpiry, daysSinceExpiry: days, expiredAddOns: [] };
+          }
         });
 
         // 2. Add-on-expired members
@@ -646,7 +683,7 @@ export default function Dashboard() {
             const { data: aoMembers } = await withRetry(() =>
               supabase
                 .from("members")
-                .select("id, full_name, phone, email, end_date, package_variants(duration_value, duration_unit, packages(title))")
+                .select("id, full_name, phone, email, end_date, joining_date, created_at, package_variants(duration_value, duration_unit, pricing_type, packages(title))")
                 .in("id", addOnOnlyIds)
             );
             (aoMembers || []).forEach(member => {
@@ -669,6 +706,7 @@ export default function Dashboard() {
           .slice(0, 10);
 
         setExpiredMembers(processed);
+        setExpiredMembersTotal(Object.keys(memberMap).length);
       } catch (err) {
         console.error("Failed to load expired members:", err);
       } finally {
@@ -1496,7 +1534,7 @@ export default function Dashboard() {
             <div className="flex items-center justify-between mb-3">
               <h2 className="font-semibold text-white">Expired Members</h2>
               <button
-                onClick={() => openModal(<ExpiredMembersModal emailTemplates={emailTemplates} />)}
+                onClick={() => navigate("/members?filter=expired")}
                 className="px-2 py-1 bg-rose-500 text-white rounded-md hover:bg-rose-600 text-xs font-bold transition-all shadow-sm"
               >
                 View All
@@ -1505,8 +1543,8 @@ export default function Dashboard() {
 
             <div className="mb-3 pb-2 border-b">
               <p className="text-xs text-secondary">Need Renewal</p>
-              <p className="text-xl font-bold text-white">{expiredMembers.length === 10 ? "10+" : expiredMembers.length}</p>
-              <p className="text-xs text-secondary mt-1">recently expired</p>
+              <p className="text-xl font-bold text-white">{expiredMembersTotal}</p>
+              <p className="text-xs text-secondary mt-1">members expired</p>
             </div>
 
             {loadingExpired ? (

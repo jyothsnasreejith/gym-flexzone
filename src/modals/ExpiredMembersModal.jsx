@@ -17,44 +17,60 @@ export default function ExpiredMembersModal({ emailTemplates = [] }) {
 
         const today = new Date().toISOString().split('T')[0];
         const todayDate = new Date();
+        todayDate.setHours(0, 0, 0, 0);
 
-        // 1. Package-expired members
-        const { data: pkgData, error: pkgError } = await supabase
+        // Helper to compute expiry date from joining_date (same as MembersList)
+        const computeExpiryDate = (member) => {
+          const variant = member.package_variants;
+          if (!variant || variant.pricing_type !== "duration") return null;
+
+          const baseDate = member.joining_date || member.created_at;
+          if (!baseDate) return null;
+
+          const start = new Date(baseDate);
+          const unit = variant.duration_unit?.toLowerCase();
+          const value = Number(variant.duration_value || 0);
+          if (!value || !unit) return null;
+
+          const expiry = new Date(start);
+          if (unit === "month") {
+            expiry.setMonth(expiry.getMonth() + value);
+          } else if (unit === "year") {
+            expiry.setFullYear(expiry.getFullYear() + value);
+          } else if (unit === "day" || unit === "days") {
+            expiry.setDate(expiry.getDate() + value);
+          } else {
+            return null;
+          }
+          return expiry.toISOString().slice(0, 10);
+        };
+
+        // 1. Get all members with packages - NO FILTERS
+        const { data: pkgMembers } = await supabase
           .from("members")
-          .select(`
-            id,
-            full_name,
-            phone,
-            email,
-            end_date,
-            package_variant_id,
-            package_variants (
-              id,
-              duration_value,
-              duration_unit,
-              pricing_type,
-              price,
-              packages (
-                title
-              )
-            )
-          `)
-          .lt("end_date", today)
-          .not("end_date", "is", null)
-          .order("end_date", { ascending: false });
+          .select(
+            `id,full_name,phone,email,joining_date,created_at,package_variant_id,package_variants(id,duration_value,duration_unit,pricing_type,price,packages(title))`
+          )
+          .eq("is_deleted", false);
 
-        if (pkgError) throw pkgError;
-
-        // Build a map of already-found members (by package expiry)
+        // Filter to expired based on computed expiry
         const memberMap = {};
-        (pkgData || []).forEach(member => {
-          const endDate = new Date(member.end_date);
-          const daysSinceExpiry = Math.floor((todayDate - endDate) / (1000 * 60 * 60 * 24));
-          memberMap[member.id] = {
-            ...member,
-            daysSinceExpiry,
-            expiredAddOns: [],
-          };
+        (pkgMembers || []).forEach(member => {
+          const computedExpiry = computeExpiryDate(member);
+          if (!computedExpiry) return;
+          
+          const expDate = new Date(computedExpiry);
+          expDate.setHours(0, 0, 0, 0);
+          
+          if (expDate < todayDate) {
+            const daysSinceExpiry = Math.floor((todayDate - expDate) / (1000 * 60 * 60 * 24));
+            memberMap[member.id] = {
+              ...member,
+              end_date: computedExpiry,
+              daysSinceExpiry,
+              expiredAddOns: [],
+            };
+          }
         });
 
         // 2. Add-on-expired members from member_add_ons
@@ -89,28 +105,26 @@ export default function ExpiredMembersModal({ emailTemplates = [] }) {
           );
 
           if (addOnOnlyMemberIds.length > 0) {
-            const { data: aoMembers, error: aoMembersError } = await supabase
+            const { data: aoMembers } = await supabase
               .from("members")
-              .select("id, full_name, phone, email, end_date, package_variant_id, package_variants(id, duration_value, duration_unit, pricing_type, price, packages(title))")
+              .select("id, full_name, phone, email, end_date, joining_date, created_at, package_variant_id, package_variants(id, duration_value, duration_unit, pricing_type, price, packages(title))")
               .in("id", addOnOnlyMemberIds);
 
-            if (!aoMembersError) {
-              (aoMembers || []).forEach(member => {
-                // Use earliest add-on expiry as the display date
-                const addOns = expiredAddOnsByMember[member.id] || [];
-                const earliestExpiry = addOns.reduce((min, ao) =>
-                  !min || ao.end_date < min ? ao.end_date : min, null
-                );
-                const endDate = new Date(earliestExpiry);
-                const daysSinceExpiry = Math.floor((todayDate - endDate) / (1000 * 60 * 60 * 24));
-                memberMap[member.id] = {
-                  ...member,
-                  end_date: earliestExpiry,
-                  daysSinceExpiry,
-                  expiredAddOns: addOns,
-                };
-              });
-            }
+            (aoMembers || []).forEach(member => {
+              // Use earliest add-on expiry as the display date
+              const addOns = expiredAddOnsByMember[member.id] || [];
+              const earliestExpiry = addOns.reduce((min, ao) =>
+                !min || ao.end_date < min ? ao.end_date : min, null
+              );
+              const endDate = new Date(earliestExpiry);
+              const daysSinceExpiry = Math.floor((todayDate - endDate) / (1000 * 60 * 60 * 24));
+              memberMap[member.id] = {
+                ...member,
+                end_date: earliestExpiry,
+                daysSinceExpiry,
+                expiredAddOns: addOns,
+              };
+            });
           }
 
           // Attach expired add-on info to existing package-expired members too
@@ -125,6 +139,9 @@ export default function ExpiredMembersModal({ emailTemplates = [] }) {
           (a, b) => new Date(b.end_date) - new Date(a.end_date)
         );
 
+        console.log("ExpiredMembersModal - Total expired members found:", merged.length);
+        console.log("ExpiredMembersModal - Package-expired members:", Object.values(memberMap).filter(m => !m.expiredAddOns?.length).length);
+        console.log("ExpiredMembersModal - Members with add-ons:", Object.values(memberMap).filter(m => m.expiredAddOns?.length > 0).length);
         setExpiredMembers(merged);
       } catch (err) {
         console.error("Failed to load expired members:", err);

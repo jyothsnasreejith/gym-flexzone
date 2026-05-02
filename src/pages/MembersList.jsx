@@ -4,6 +4,7 @@ import { supabase } from "../supabaseClient";
 import ActionButtons from "../components/ActionButtons";
 import { formatBatch } from "../utils/style";
 import { isCountable } from "../utils/paymentStatus";
+import { openWhatsAppClient, openEmailClient } from "../utils/communicationHelpers";
 
 import { useToast } from "../context/ToastContext";
 
@@ -101,10 +102,11 @@ export default function MembersList() {
     package_id: "",
     trainer_id: "",
     search: "",
+    expiredOnly: false,
   });
 
   const filtersActive = Boolean(
-    filters.package_id || filters.trainer_id || filters.search
+    filters.package_id || filters.trainer_id || filters.search || filters.expiredOnly
   );
 
   /* ================= LOAD FILTER OPTIONS ================= */
@@ -120,6 +122,16 @@ export default function MembersList() {
     };
 
     loadFilters();
+  }, []);
+
+  /* ================= READ URL PARAMS (for filter=expired from Dashboard) ================= */
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("filter") === "expired") {
+      setFilters((f) => ({ ...f, expiredOnly: true }));
+      // Clean URL
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
   }, []);
 
   /* ================= LOAD BILLS SUMMARY (for current page only) ================= */
@@ -412,6 +424,18 @@ export default function MembersList() {
 
         const addOnItems = addOnMap.get(m.id) || [];
 
+        // Calculate days expired
+        const expiryDateComputed = computeExpiryDate(m, packageHistoryMap);
+        const daysExpired = (() => {
+          if (!expiryDateComputed) return null;
+          const expDate = new Date(expiryDateComputed);
+          expDate.setHours(0, 0, 0, 0);
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+          if (expDate >= today) return null; // Not expired
+          return Math.floor((today - expDate) / (1000 * 60 * 60 * 24));
+        })();
+
         return {
           ...m,
           ...financials,
@@ -424,12 +448,15 @@ export default function MembersList() {
           package_label: packageLabel,
           add_on_items: addOnItems,
           area: m.area || "—",
-          expiry_date:
-            computeExpiryDate(m, packageHistoryMap) || null,
+          expiry_date: expiryDateComputed || null,
+          daysExpired,
         };
       });
 
-      setMembers(normalized);
+      // Filter by expiredOnly if needed
+      const filtered = filters.expiredOnly ? normalized.filter(m => m.daysExpired !== null) : normalized;
+
+      setMembers(filtered);
     } catch (error) {
       console.error("Failed to load members:", error);
       setMembers([]);
@@ -536,10 +563,21 @@ export default function MembersList() {
           ))}
         </select>
 
+        <button
+          onClick={() => setFilters((f) => ({ ...f, expiredOnly: !f.expiredOnly }))}
+          className={`h-10 px-4 rounded-lg font-semibold text-sm transition-colors ${
+            filters.expiredOnly
+              ? "bg-red-600 text-white hover:bg-red-700"
+              : "border border-gray-600 text-gray-300 hover:bg-gray-700"
+          }`}
+        >
+          {filters.expiredOnly ? "✓ Expired Only" : "Expired Only"}
+        </button>
+
         {filtersActive && (
           <button
-            onClick={() => setFilters({ package_id: "", trainer_id: "", search: "" })}
-            className="h-10 px-4 rounded-lg bg-gray-100 hover:bg-gray-200 text-white font-semibold text-sm justify-self-start md:justify-self-auto"
+            onClick={() => setFilters({ package_id: "", trainer_id: "", search: "", expiredOnly: false })}
+            className="h-10 px-4 rounded-lg bg-gray-100 hover:bg-gray-200 text-black font-semibold text-sm justify-self-start md:justify-self-auto"
           >
             Clear
           </button>
@@ -564,6 +602,11 @@ export default function MembersList() {
                 <th className="px-5 py-3 text-left font-semibold bg-slate-800/50">
                   Trainer
                 </th>
+                {filters.expiredOnly && (
+                  <th className="px-5 py-3 text-left font-semibold bg-slate-800/50">
+                    Days Expired
+                  </th>
+                )}
                 <th className="px-5 py-3 text-left font-semibold bg-slate-800/50">
                   Actions
                 </th>
@@ -660,9 +703,46 @@ export default function MembersList() {
                       <td className="px-5 py-3 whitespace-nowrap">
                         {m.trainer_name}
                       </td>
+                      {filters.expiredOnly && (
+                        <td className="px-5 py-3 whitespace-nowrap">
+                          {m.daysExpired !== null && m.daysExpired !== undefined ? (
+                            <span className={`px-2 py-1 rounded text-xs font-semibold ${
+                              m.daysExpired <= 7 ? "bg-red-600 text-white" :
+                              m.daysExpired <= 30 ? "bg-orange-600 text-white" :
+                              "bg-gray-600 text-white"
+                            }`}>
+                              {m.daysExpired} day{m.daysExpired !== 1 ? "s" : ""}
+                            </span>
+                          ) : "-"}
+                        </td>
+                      )}
                       <td className="px-5 py-3">
                         <div onClick={(e) => e.stopPropagation()}>
                           <div className="flex items-center gap-2">
+                            {filters.expiredOnly && (
+                              <div className="relative group">
+                                <button
+                                  className="px-2 py-1 rounded-md bg-green-600 hover:bg-green-700 text-white text-xs font-medium transition-colors"
+                                  title="Send Message"
+                                >
+                                  <span>💬</span>
+                                </button>
+                                <div className="absolute right-0 mt-1 w-40 bg-slate-700 border border-slate-600 rounded-lg shadow-lg opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto transition-opacity z-20">
+                                  <button
+                                    onClick={() => openWhatsAppClient(m, null, { end_date: m.expiry_date }, "expiry")}
+                                    className="w-full text-left px-3 py-2 text-xs text-white hover:bg-slate-600 rounded-t-lg"
+                                  >
+                                    📱 WhatsApp
+                                  </button>
+                                  <button
+                                    onClick={() => openEmailClient(m, null, { end_date: m.expiry_date }, "expiry")}
+                                    className="w-full text-left px-3 py-2 text-xs text-white hover:bg-slate-600 rounded-b-lg"
+                                  >
+                                    ✉️ Email
+                                  </button>
+                                </div>
+                              </div>
+                            )}
                             <ActionButtons
                               size="sm"
                               onDelete={() => deleteMember(m.id)}
@@ -712,8 +792,37 @@ export default function MembersList() {
                         <div className={`text-sm mt-1 ${paymentClass}`}>
                           Pending: ₹{dueAmount}
                         </div>
+                        {filters.expiredOnly && m.daysExpired !== null && (
+                          <div className="text-xs mt-1">
+                            <span className={`px-2 py-1 rounded text-xs font-semibold ${
+                              m.daysExpired <= 7 ? "bg-red-600 text-white" :
+                              m.daysExpired <= 30 ? "bg-orange-600 text-white" :
+                              "bg-gray-600 text-white"
+                            }`}>
+                              {m.daysExpired} day{m.daysExpired !== 1 ? "s" : ""} expired
+                            </span>
+                          </div>
+                        )}
                       </div>
-                      <div onClick={(e) => e.stopPropagation()}>
+                      <div onClick={(e) => e.stopPropagation()} className="flex gap-2 flex-col">
+                        {filters.expiredOnly && (
+                          <>
+                            <button
+                              onClick={() => openWhatsAppClient(m, null, { end_date: m.expiry_date }, "expiry")}
+                              className="px-2 py-1 rounded-md bg-green-600 hover:bg-green-700 text-white text-xs font-medium transition-colors"
+                              title="Send WhatsApp"
+                            >
+                              📱
+                            </button>
+                            <button
+                              onClick={() => openEmailClient(m, null, { end_date: m.expiry_date }, "expiry")}
+                              className="px-2 py-1 rounded-md bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium transition-colors"
+                              title="Send Email"
+                            >
+                              ✉️
+                            </button>
+                          </>
+                        )}
                         <ActionButtons
                           size="sm"
                           onDelete={() => deleteMember(m.id)}

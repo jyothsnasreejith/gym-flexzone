@@ -578,7 +578,7 @@ export default function MembersList() {
               setFilters({ package_id: "", trainer_id: "", search: "" });
               setShowExpiredOnly(false);
             }}
-            className="h-10 px-4 rounded-lg bg-slate-700 hover:bg-slate-600 text-white font-semibold text-sm justify-self-start md:justify-self-auto"
+            className="h-10 px-4 rounded-lg bg-slate-700 hover:bg-slate-600 text-black font-semibold text-sm justify-self-start md:justify-self-auto"
           >
             Clear
           </button>

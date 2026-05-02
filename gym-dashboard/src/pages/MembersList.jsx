@@ -121,10 +121,12 @@ export default function MembersList() {
     package_id: "",
     trainer_id: "",
     search: "",
+    expiredOnly: false,
   });
+  const [searchMode, setSearchMode] = useState("both"); // 'both', 'name', 'phone'
 
   const filtersActive = Boolean(
-    filters.package_id || filters.trainer_id || filters.search
+    filters.package_id || filters.trainer_id || filters.search || filters.expiredOnly
   );
 
   /* ================= LOAD FILTER OPTIONS ================= */
@@ -261,9 +263,16 @@ export default function MembersList() {
         }
         if (filters.search) {
           const term = filters.search.trim();
-          query = query.or(
-            `full_name.ilike.%${term}%,phone.ilike.%${term}%,admission_no.ilike.%${term}%`
-          );
+          if (searchMode === "phone") {
+            query = query.ilike("phone", `%${term}%`);
+          } else if (searchMode === "name") {
+            query = query.or(`full_name.ilike.%${term}%,admission_no.ilike.%${term}%`);
+          } else {
+            // 'both' mode
+            query = query.or(
+              `full_name.ilike.%${term}%,phone.ilike.%${term}%,admission_no.ilike.%${term}%`
+            );
+          }
         }
         return query;
       };
@@ -471,7 +480,7 @@ export default function MembersList() {
   useEffect(() => {
     if (packages.length === 0) return;
     loadMembers();
-  }, [filters, packages, showExpiredOnly]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [filters, packages, showExpiredOnly, searchMode]); // eslint-disable-line react-hooks/exhaustive-deps
 
   /* ================= REFRESH ON FOCUS ================= */
   useEffect(() => {
@@ -524,66 +533,97 @@ export default function MembersList() {
       </div>
 
       {/* FILTER BAR */}
-      <div className="bg-card border rounded-xl p-3 mb-5 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-[1.5fr_1fr_1fr_auto_auto] gap-3 items-center">
-        <input
-          type="text"
-          placeholder="Search by name or phone..."
-          value={filters.search}
-          onChange={(e) =>
-            setFilters((f) => ({ ...f, search: e.target.value }))
-          }
-          className="border rounded-lg px-3 h-10 text-sm w-full bg-card text-white"
-        />
-
-        <select
-          value={filters.package_id}
-          onChange={(e) =>
-            setFilters((f) => ({ ...f, package_id: e.target.value }))
-          }
-          className="border rounded-lg px-3 h-10 text-sm w-full bg-card text-white"
-        >
-          <option value="">All Packages</option>
-          {packages.map((p) => (
-            <option key={p.id} value={p.id}>
-              {p.title}
-            </option>
-          ))}
-        </select>
-
-        <select
-          value={filters.trainer_id}
-          onChange={(e) =>
-            setFilters((f) => ({ ...f, trainer_id: e.target.value }))
-          }
-          className="border rounded-lg px-3 h-10 text-sm w-full bg-card text-white"
-        >
-          <option value="">All Trainers</option>
-          {trainers.map((t) => (
-            <option key={t.id} value={t.id}>
-              {t.full_name}
-            </option>
-          ))}
-        </select>
-
-        <label className="flex items-center gap-2 h-10 px-3 border rounded-lg hover:bg-slate-800/50 cursor-pointer text-sm font-medium whitespace-nowrap">
+      <div className="bg-card border rounded-xl p-4 mb-5 space-y-3">
+        {/* Row 1: Search Input with Checkbox and Button */}
+        <div className="flex items-center gap-3">
           <input
-            type="checkbox"
-            checked={showExpiredOnly}
-            onChange={(e) => setShowExpiredOnly(e.target.checked)}
-            className="rounded border-gray-300 text-primary focus:ring-primary cursor-pointer"
+            type="text"
+            placeholder={searchMode === "phone" ? "Search by phone number..." : "Search by name or admission number..."}
+            value={filters.search}
+            onChange={(e) =>
+              setFilters((f) => ({ ...f, search: e.target.value }))
+            }
+            className="flex-1 border rounded-lg px-3 h-10 text-sm w-full bg-card text-white"
           />
-          <span>Expired Only</span>
-        </label>
+          
+          <label className="flex items-center gap-2 px-3 h-10 bg-slate-700 rounded-lg cursor-pointer hover:bg-slate-600 transition text-white text-sm whitespace-nowrap">
+            <input
+              type="checkbox"
+              checked={searchMode === "phone"}
+              onChange={(e) =>
+                setSearchMode(e.target.checked ? "phone" : "both")
+              }
+              className="rounded"
+            />
+            <span>Phone</span>
+          </label>
 
-        {(filtersActive || showExpiredOnly) && (
           <button
-            onClick={() => {
-              setFilters({ package_id: "", trainer_id: "", search: "" });
-              setShowExpiredOnly(false);
-            }}
-            className="h-10 px-4 rounded-lg bg-slate-700 hover:bg-slate-600 text-black font-semibold text-sm justify-self-start md:justify-self-auto"
+            onClick={() => loadMembers()}
+            className="h-10 px-4 rounded-lg bg-primary text-white font-semibold text-sm hover:bg-primary/90 transition-colors whitespace-nowrap"
           >
-            Clear
+            Search
+          </button>
+        </div>
+
+        {/* Row 2: Other Filters */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 items-center">
+          <select
+            value={filters.package_id}
+            onChange={(e) =>
+              setFilters((f) => ({ ...f, package_id: e.target.value }))
+            }
+            className="border rounded-lg px-3 h-10 text-sm w-full bg-card text-white"
+          >
+            <option value="">All Packages</option>
+            {packages.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.title}
+              </option>
+            ))}
+          </select>
+
+          <select
+            value={filters.trainer_id}
+            onChange={(e) =>
+              setFilters((f) => ({ ...f, trainer_id: e.target.value }))
+            }
+            className="border rounded-lg px-3 h-10 text-sm w-full bg-card text-white"
+          >
+            <option value="">All Trainers</option>
+            {trainers.map((t) => (
+              <option key={t.id} value={t.id}>
+                {t.full_name}
+              </option>
+            ))}
+          </select>
+
+          <div className="flex gap-2">
+            <label className="flex-1 flex items-center gap-2 h-10 px-3 border rounded-lg hover:bg-slate-800/50 cursor-pointer text-sm font-medium">
+              <input
+                type="checkbox"
+                checked={showExpiredOnly}
+                onChange={(e) => setShowExpiredOnly(e.target.checked)}
+                className="rounded border-gray-300 text-primary focus:ring-primary cursor-pointer"
+              />
+              <span>Expired Only</span>
+            </label>
+
+            {(filtersActive || showExpiredOnly) && (
+              <button
+                onClick={() => {
+                  setFilters({ package_id: "", trainer_id: "", search: "", expiredOnly: false });
+                  setShowExpiredOnly(false);
+                  setSearchMode("both");
+                }}
+                className="h-10 px-4 rounded-lg bg-slate-700 hover:bg-slate-600 text-white font-semibold text-sm"
+              >
+                Clear
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
           </button>
         )}
       </div>

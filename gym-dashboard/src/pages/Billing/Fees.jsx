@@ -359,37 +359,56 @@ export default function Fees() {
     let addOnTotal = 0;
     let addOnDuration = "";
     let addOnItems = [];
+    
+    // First fetch member_add_ons to get the add_on_ids
     const { data: addOnRows, error: addOnError } = await supabase
       .from("member_add_ons")
-      .select("add_on_id, add_ons ( name, amount, duration_value, duration_unit )")
+      .select("add_on_id")
       .eq("member_id", memberId);
 
-    if (addOnError) {
-      console.warn("Failed to load member add-ons:", addOnError);
+    console.log(`[DEBUG Fees] Member ${memberId} addOnRows:`, addOnRows, "Error:", addOnError);
+
+    if (!addOnError && Array.isArray(addOnRows) && addOnRows.length > 0) {
+      const addOnIds = addOnRows.map(r => String(r.add_on_id));
+      console.log(`[DEBUG Fees] addOnIds to fetch:`, addOnIds);
+      
+      // Then fetch the add_on details
+      const { data: addOnDetails, error: addOnDetailsError } = await supabase
+        .from("add_ons")
+        .select("id, name, amount, duration_value, duration_unit")
+        .in("id", addOnIds);
+
+      console.log(`[DEBUG Fees] addOnDetails:`, addOnDetails, "Error:", addOnDetailsError);
+
+      if (!addOnDetailsError && Array.isArray(addOnDetails)) {
+        addOnItems = addOnDetails.map((ao) => ({
+          name: ao.name,
+          amount: ao.amount,
+          duration_value: ao.duration_value,
+          duration_unit: ao.duration_unit,
+        }));
+
+        console.log(`[DEBUG Fees] Processed addOnItems:`, addOnItems);
+
+        addOnNames = [...new Set(addOnItems.map((item) => item.name))];
+        addOnTotal = addOnItems.reduce(
+          (sum, item) => sum + Number(item.amount || 0),
+          0
+        );
+
+        const durationLabels = addOnItems
+          .map((item) =>
+            item.duration_value && item.duration_unit
+              ? `${item.duration_value} ${item.duration_unit}`
+              : null
+          )
+          .filter(Boolean);
+        addOnDuration = [...new Set(durationLabels)].join(", ");
+      } else {
+        console.warn(`[DEBUG Fees] Failed to fetch addon details:`, addOnDetailsError);
+      }
     } else {
-      addOnItems = (addOnRows || [])
-        .map((row) => ({
-          name: row.add_ons?.name,
-          amount: row.add_ons?.amount,
-          duration_value: row.add_ons?.duration_value,
-          duration_unit: row.add_ons?.duration_unit,
-        }))
-        .filter((item) => Boolean(item.name));
-
-      addOnNames = [...new Set(addOnItems.map((item) => item.name))];
-      addOnTotal = addOnItems.reduce(
-        (sum, item) => sum + Number(item.amount || 0),
-        0
-      );
-
-      const durationLabels = addOnItems
-        .map((item) =>
-          item.duration_value && item.duration_unit
-            ? `${item.duration_value} ${item.duration_unit}`
-            : null
-        )
-        .filter(Boolean);
-      addOnDuration = [...new Set(durationLabels)].join(", ");
+      console.log(`[DEBUG Fees] No addons found or error:`, addOnError);
     }
 
     if (data?.package_variants) {

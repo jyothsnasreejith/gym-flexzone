@@ -1893,7 +1893,7 @@ export default function MemberForm({
                                     const val = Number(addon.duration_value || 0);
 
                                     if (unit === "month") {
-                                      d.setDate(d.getDate() + val * 30);
+                                      d.setMonth(d.getMonth() + val);
                                     } else if (unit === "year") {
                                       d.setFullYear(d.getFullYear() + val);
                                     } else if (unit === "day" || unit === "days") {

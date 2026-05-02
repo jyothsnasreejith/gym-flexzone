@@ -377,9 +377,12 @@ export default function MembersList() {
       });
 
       const computeExpiryDate = (member, historyMap) => {
-        // Always calculate fresh from joining_date, ignoring stored member.end_date
-        // (stored values were calculated from created_at instead of joining_date)
-        // Only renewals will update member.end_date correctly going forward
+        // Priority 1: Use stored end_date if it exists (from renewal or recent updates)
+        if (member.end_date) {
+          return member.end_date;
+        }
+
+        // Priority 2: Calculate fresh from joining_date (legacy data)
         const variant = member.package_variants;
         if (!variant || variant.pricing_type !== "duration") return null;
 

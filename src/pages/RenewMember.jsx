@@ -11,9 +11,19 @@ const calcEndDate = (startDate, variant) => {
   const base = new Date(startDate);
   const val = Number(variant.duration_value || 0);
   const unit = (variant.duration_unit || "").toLowerCase();
-  if (unit === "month") base.setMonth(base.getMonth() + val);
-  else if (unit === "year") base.setFullYear(base.getFullYear() + val);
-  else if (unit === "day" || unit === "days") base.setDate(base.getDate() + val);
+  
+  if (unit === "month") {
+    // Add months more reliably
+    const targetMonth = base.getMonth() + val;
+    const targetYear = base.getFullYear() + Math.floor(targetMonth / 12);
+    const finalMonth = targetMonth % 12;
+    base.setFullYear(targetYear);
+    base.setMonth(finalMonth);
+  } else if (unit === "year") {
+    base.setFullYear(base.getFullYear() + val);
+  } else if (unit === "day" || unit === "days") {
+    base.setDate(base.getDate() + val);
+  }
   return base.toISOString().slice(0, 10);
 };
 

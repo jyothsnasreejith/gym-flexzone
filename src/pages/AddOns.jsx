@@ -227,7 +227,7 @@ const AddOns = () => {
                   type="text"
                   value={form.name}
                   onChange={(e) => updateForm("name", e.target.value)}
-                  className="w-full rounded-lg border border-slate-700/20 px-4 py-2.5 text-sm text-white focus:border-primary focus:ring-2 focus:ring-primary/20"
+                  className="w-full rounded-lg border border-secondary-blue px-4 py-2.5 text-sm text-white bg-transparent focus:border-primary focus:ring-2 focus:ring-primary/20"
                   placeholder="e.g. PT Add-on"
                 />
               </div>
@@ -241,7 +241,7 @@ const AddOns = () => {
                   min="1"
                   value={form.durationValue}
                   onChange={(e) => updateForm("durationValue", e.target.value)}
-                  className="w-full rounded-lg border border-slate-700/20 px-4 py-2.5 text-sm text-white focus:border-primary focus:ring-2 focus:ring-primary/20"
+                  className="w-full rounded-lg border border-secondary-blue px-4 py-2.5 text-sm text-white bg-transparent focus:border-primary focus:ring-2 focus:ring-primary/20"
                   placeholder="e.g. 30"
                 />
               </div>
@@ -253,7 +253,7 @@ const AddOns = () => {
                 <select
                   value={form.durationUnit}
                   onChange={(e) => updateForm("durationUnit", e.target.value)}
-                  className="w-full rounded-lg border border-slate-700/20 px-4 py-2.5 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 bg-card text-white"
+                  className="w-full rounded-lg border border-secondary-blue px-4 py-2.5 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 bg-transparent text-white"
                 >
                   <option value="days">Days</option>
                   <option value="months">Months</option>
@@ -270,7 +270,7 @@ const AddOns = () => {
                   step="0.01"
                   value={form.amount}
                   onChange={(e) => updateForm("amount", e.target.value)}
-                  className="w-full rounded-lg border border-slate-700/20 px-4 py-2.5 text-sm text-white focus:border-primary focus:ring-2 focus:ring-primary/20"
+                  className="w-full rounded-lg border border-secondary-blue px-4 py-2.5 text-sm text-white bg-transparent focus:border-primary focus:ring-2 focus:ring-primary/20"
                   placeholder="e.g. 1499"
                 />
               </div>

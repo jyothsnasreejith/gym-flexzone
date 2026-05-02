@@ -352,7 +352,7 @@ const AddPackageModal = ({ mode = "add", initialData, onSave }) => {
                     : createPTVariant(),
                 ]);
               }}
-              className="w-full border rounded-md px-3 py-2 bg-card text-white"
+              className="w-full border border-secondary-blue rounded-md px-3 py-2 bg-transparent text-white"
             >
               <option value="membership">Membership</option>
               <option value="personal_training">Personal Training</option>
@@ -365,7 +365,7 @@ const AddPackageModal = ({ mode = "add", initialData, onSave }) => {
                 setMemberScope(scope);
                 setMemberCount(scope === "family" ? 3 : scope === "couple" ? 2 : 1);
               }}
-              className="w-full border rounded-md px-3 py-2 bg-card text-white"
+              className="w-full border border-secondary-blue rounded-md px-3 py-2 bg-transparent text-white"
             >
               <option value="individual">Individual</option>
               <option value="couple">Couple</option>
@@ -427,7 +427,7 @@ const AddPackageModal = ({ mode = "add", initialData, onSave }) => {
                 setBatchStartTime(slot?.start_time || "");
                 setBatchEndTime(slot?.end_time || "");
               }}
-              className="w-full border rounded-md px-3 py-2 text-sm bg-card text-white"
+              className="w-full border border-secondary-blue rounded-md px-3 py-2 text-sm bg-transparent text-white"
             >
               <option value="">Select preset (optional)</option>
               {batchSlots.map((slot) => (
@@ -479,7 +479,7 @@ const AddPackageModal = ({ mode = "add", initialData, onSave }) => {
                             )
                           );
                         }}
-                        className="w-full px-3 pr-9 h-9 text-sm truncate text-gray-800"
+                        className="w-full px-3 pr-9 h-9 text-sm truncate bg-transparent text-white border border-secondary-blue rounded"
                       >
                         <option value="month">Month</option>
                         <option value="year">Year</option>
@@ -490,7 +490,7 @@ const AddPackageModal = ({ mode = "add", initialData, onSave }) => {
                         onChange={e =>
                           updateVariant(v.id, "duration_value", Number(e.target.value))
                         }
-                        className="w-full px-3 pr-9 h-9 text-sm truncate text-gray-800"
+                        className="w-full px-3 pr-9 h-9 text-sm truncate bg-transparent text-white border border-secondary-blue rounded"
                       >
                         {MEMBERSHIP_DURATIONS[v.duration_unit].map(d => (
                           <option key={d} value={d}>
@@ -510,7 +510,7 @@ const AddPackageModal = ({ mode = "add", initialData, onSave }) => {
                           }
                           updateVariant(v.id, "duration_months", newMonths);
                         }}
-                        className="w-full px-3 pr-9 h-9 text-sm truncate text-gray-800"
+                        className="w-full px-3 pr-9 h-9 text-sm truncate bg-transparent text-white border border-secondary-blue rounded"
                       >
                         <option value={1}>1 Month</option>
                         <option value={3}>3 Months</option>
@@ -522,7 +522,7 @@ const AddPackageModal = ({ mode = "add", initialData, onSave }) => {
                         onChange={(e) =>
                           updateVariant(v.id, "weekly_days", Number(e.target.value))
                         }
-                        className="w-full px-3 pr-9 h-9 text-sm truncate text-gray-800"
+                        className="w-full px-3 pr-9 h-9 text-sm truncate bg-transparent text-white border border-secondary-blue rounded"
                       >
                         <option value={4}>4 days/week</option>
                         <option value={5}>5 days/week</option>

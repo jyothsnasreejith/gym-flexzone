@@ -972,7 +972,7 @@ export default function Fees() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
         {/* LEFT: MEMBER LIST */}
         <div className="bg-primary-blue border border-slate-700/20 rounded-xl overflow-hidden md:h-[calc(100vh-160px)] flex flex-col">
           <div className="p-4 border-b">
@@ -1022,14 +1022,14 @@ export default function Fees() {
         {/* RIGHT: DETAILS */}
         <div
           ref={detailsRef}
-          className="md:col-span-2 bg-primary-blue border border-slate-700/20 rounded-xl p-6 md:h-[calc(100vh-160px)] flex flex-col md:overflow-hidden scroll-mt-20"
+          className="md:col-span-4 bg-primary-blue border border-slate-700/20 rounded-xl p-6 md:h-[calc(100vh-160px)] flex flex-col md:overflow-hidden scroll-mt-20"
         >
           {!selectedMember ? (
             <div className="text-secondary text-center m-auto">
               Select a member to view fee details
             </div>
           ) : (
-            <div className="flex-1 overflow-y-auto pr-1">
+            <div className="flex-1 overflow-y-auto pr-1 scrollbar-hide">
               <h2 className="text-xl font-bold text-white mb-4">
                 {selectedMember.full_name}
               </h2>

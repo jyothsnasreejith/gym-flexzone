@@ -71,7 +71,7 @@ export default function AdminBatchSlotSettings() {
             onChange={(e) =>
               setSettings({ ...settings, start_time: e.target.value })
             }
-            className="mt-1 w-full rounded-md border px-3 py-2"
+            className="mt-1 w-full rounded-md border border-secondary-blue px-3 py-2 bg-transparent text-white"
           />
         </div>
 
@@ -83,7 +83,7 @@ export default function AdminBatchSlotSettings() {
             onChange={(e) =>
               setSettings({ ...settings, end_time: e.target.value })
             }
-            className="mt-1 w-full rounded-md border px-3 py-2"
+            className="mt-1 w-full rounded-md border border-secondary-blue px-3 py-2 bg-transparent text-white"
           />
         </div>
 
@@ -102,7 +102,7 @@ export default function AdminBatchSlotSettings() {
                 interval_minutes: Number(e.target.value),
               })
             }
-            className="mt-1 w-full rounded-md border px-3 py-2"
+            className="mt-1 w-full rounded-md border border-secondary-blue px-3 py-2 bg-transparent text-white"
           />
         </div>
 

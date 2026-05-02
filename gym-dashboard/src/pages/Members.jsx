@@ -471,6 +471,16 @@ export default function Members() {
     return expDate < today;
   })();
 
+  // Helper function to check if a date is expired
+  const isDateExpired = (dateStr) => {
+    if (!dateStr) return false;
+    const expDate = new Date(dateStr);
+    expDate.setHours(0, 0, 0, 0);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return expDate < today;
+  };
+
   // Make isActive dynamic based on expiry status, not static member.status
   const isActive = !isExpired && member.status?.toLowerCase() === "active" && finalExpiry !== null;
   
@@ -921,6 +931,33 @@ export default function Members() {
                     <p className="text-white font-headline font-bold">{memberPackage.packageTitle} ({memberPackage.duration})</p>
                   </div>
                 )}
+                
+                {/* Active Add-ons */}
+                {memberAddOns && memberAddOns.length > 0 && (
+                  <div className="mt-6">
+                    <h3 className="text-xs text-gold font-bold uppercase mb-3">Active Add-ons</h3>
+                    <div className="space-y-2">
+                      {memberAddOns
+                        .filter(ao => ao.add_ons && ao.end_date && !isDateExpired(ao.end_date))
+                        .map((ao, idx) => (
+                          <div
+                            key={idx}
+                            className="p-3 bg-secondary-blue border-l-2 border-accent rounded-lg"
+                          >
+                            <div className="flex justify-between items-start">
+                              <div>
+                                <p className="text-white font-semibold text-sm">{ao.add_ons.name}</p>
+                                <p className="text-secondary text-xs">₹{Number(ao.add_ons.amount || 0).toFixed(2)}</p>
+                              </div>
+                              <p className="text-accent text-xs font-bold">
+                                Exp: {formatDate(ao.end_date)}
+                              </p>
+                            </div>
+                          </div>
+                        ))}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -980,15 +1017,20 @@ export default function Members() {
                         : paidAmount > 0
                           ? "partial"
                           : "unpaid");
+                      const cleanDescription = bill.notes?.replace(/^Admin Added:\s*/, "") || "";
+                      const hasPackage = bill.mergedTitles || bill.packages?.[0]?.title || bill.packages?.title;
+                      const finalDescription = !hasPackage
+                        ? cleanDescription.replace(/^Package\s*\+\s*/, "")
+                        : cleanDescription;
 
                       return (
                         <tr key={`${bill.id || "row"}-${idx}`}>
                           <td className="py-4 text-sm font-medium text-white">
-                            {bill.invoice_no || `INV${bill.id}` || "—"}
+                            {paidAmount > 0 ? (bill.invoice_no || `INV${bill.id}`) : "—"}
                           </td>
                           <td className="py-4 text-sm text-secondary">{formatDate(bill.billing_date || bill.due_date)}</td>
                           <td className="py-4 text-sm text-white">
-                            {bill.mergedTitles || bill.packages?.[0]?.title || bill.packages?.title || bill.notes || "Payment"}
+                            {hasPackage || finalDescription || "Payment"}
                           </td>
                           <td className="py-4 text-sm font-bold text-right text-white">
                             Rs.{baseAmount.toFixed(2)}

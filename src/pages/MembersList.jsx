@@ -455,16 +455,38 @@ export default function MembersList() {
 
         const addOnItems = addOnMap.get(m.id) || [];
 
-        // Calculate days expired
+        // Calculate days expired (check both package and add-ons)
         const expiryDateComputed = computeExpiryDate(m, packageHistoryMap);
         const daysExpired = (() => {
-          if (!expiryDateComputed) return null;
-          const expDate = new Date(expiryDateComputed);
-          expDate.setHours(0, 0, 0, 0);
           const today = new Date();
           today.setHours(0, 0, 0, 0);
-          if (expDate >= today) return null; // Not expired
-          return Math.floor((today - expDate) / (1000 * 60 * 60 * 24));
+          
+          let earliestExpiredDate = null;
+          
+          // Check package expiry
+          if (expiryDateComputed) {
+            const expDate = new Date(expiryDateComputed);
+            expDate.setHours(0, 0, 0, 0);
+            if (expDate < today) {
+              earliestExpiredDate = expDate;
+            }
+          }
+          
+          // Check add-on expiry
+          addOnItems.forEach((ao) => {
+            if (ao.end_date) {
+              const aoExpDate = new Date(ao.end_date);
+              aoExpDate.setHours(0, 0, 0, 0);
+              if (aoExpDate < today) {
+                if (!earliestExpiredDate || aoExpDate < earliestExpiredDate) {
+                  earliestExpiredDate = aoExpDate;
+                }
+              }
+            }
+          });
+          
+          if (!earliestExpiredDate) return null; // Nothing expired
+          return Math.floor((today - earliestExpiredDate) / (1000 * 60 * 60 * 24));
         })();
 
         return {

@@ -1743,10 +1743,7 @@ export default function MemberForm({
                               </span>
                             </div>
 
-                            <input
-                              type="radio"
-                              name="package_variant"
-                              checked={checked}
+                            <div
                               onClick={() => {
                                 if (checked) {
                                   setForm((prev) => ({
@@ -1760,10 +1757,7 @@ export default function MemberForm({
                                     pricing_snapshot: null,
                                     end_date: "",
                                   }));
-                                }
-                              }}
-                              onChange={() => {
-                                if (!checked) {
+                                } else {
                                   setForm((prev) => ({
                                     ...prev,
                                     package_id: pkg.id,
@@ -1792,8 +1786,14 @@ export default function MemberForm({
                                   }));
                                 }
                               }}
-                              className="text-primary focus:ring-primary"
-                            />
+                              className={`w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 cursor-pointer transition ${checked ? "border-primary bg-primary" : "border-gray-400 hover:border-primary"}`}
+                            >
+                              {checked && (
+                                <svg className="w-4 h-4 text-white flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                </svg>
+                              )}
+                            </div>
                           </label>
                         );
                       })}
@@ -1900,7 +1900,7 @@ export default function MemberForm({
                                   return { ...prev, [key]: { start_date: newStart, end_date: newEnd } };
                                 });
                               }}
-                              className="w-full h-9 border rounded-lg px-2 text-sm text-black"
+                              className="w-full h-9 border rounded-lg px-2 text-sm text-white bg-card border-slate-600"
                             />
                           </div>
                           <div>
@@ -1910,7 +1910,7 @@ export default function MemberForm({
                               value={dates.end_date || ""}
                               readOnly
                               disabled
-                              className="w-full h-9 border rounded-lg px-2 text-sm bg-gray-50 text-black cursor-not-allowed"
+                              className="w-full h-9 border rounded-lg px-2 text-sm bg-slate-700 text-white cursor-not-allowed border-slate-600"
                             />
                           </div>
                         </div>

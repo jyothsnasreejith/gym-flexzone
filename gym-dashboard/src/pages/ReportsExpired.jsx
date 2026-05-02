@@ -172,7 +172,7 @@ export default function ReportsExpired() {
                     <td className="px-6 py-3">{formatDate(m.expiry_date)}</td>                    <td className="px-6 py-3">
                       <button
                         type="button"
-                        onClick={() => navigate(`/renew/${m.id}`)}
+                        onClick={() => navigate(`/members/${m.id}/renew`)}
                         className="px-3 py-1.5 text-xs font-semibold bg-primary text-white rounded-md hover:bg-primary/90 transition-colors"
                       >
                         Renew

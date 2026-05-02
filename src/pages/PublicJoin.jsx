@@ -274,62 +274,153 @@ export default function PublicJoin() {
         }
       }
 
-      if (idProofFile) {
-        const ext = idProofFile.name.split(".").pop();
-        const fileName = `id-proof-${member.id}.${ext}`;
-
-        const { error: uploadError } = await supabase.storage
-          .from("id-proofs")
-          .upload(fileName, idProofFile, { upsert: true });
-
-        if (uploadError) {
-          console.error("ID UPLOAD ERROR:", uploadError);
-        } else {
-          const { data: urlData } = supabase.storage
-            .from("id-proofs")
-            .getPublicUrl(fileName);
-
-          await supabase
-            .from("members")
-            .update({ id_proof_url: urlData.publicUrl })
-            .eq("id", member.id);
-        }
-      }
-
-      if (photoFile) {
-        console.log("🔍 PHOTO UPLOAD DEBUG:", {
-          photoFile: photoFile ? { name: photoFile.name, size: photoFile.size, type: photoFile.type } : null,
-          memberId: member.id,
+      // Helper: Convert File to Blob if needed (for mobile compatibility)
+      const fileToBlob = async (file) => {
+        if (file instanceof Blob) return file;
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => {
+            const arr = reader.result.split(',');
+            const mime = arr[0].match(/:(.*?);/)[1];
+            const bstr = atob(arr[1]);
+            const n = bstr.length;
+            const u8arr = new Uint8Array(n);
+            for (let i = 0; i < n; i++) {
+              u8arr[i] = bstr.charCodeAt(i);
+            }
+            resolve(new Blob([u8arr], { type: mime }));
+          };
+          reader.onerror = reject;
+          reader.readAsDataURL(file);
         });
+      };
 
-        const ext = photoFile.name.split(".").pop();
-        const fileName = `member-${member.id}.${ext}`;
-        console.log("📤 Uploading to storage:", { fileName, bucketName: "member-avatars" });
+      // Upload ID Proof with retry logic
+      if (idProofFile) {
+        try {
+          const ext = idProofFile.name.split(".").pop();
+          const fileName = `id-proof-${member.id}.${ext}`;
+          
+          console.log("🔍 ID PROOF UPLOAD START:", {
+            fileName,
+            fileSize: idProofFile.size,
+            fileType: idProofFile.type,
+            memberId: member.id,
+          });
 
-        const { error: uploadError, data: uploadData } = await supabase.storage
-          .from("member-avatars")
-          .upload(fileName, photoFile, { upsert: true });
+          // Ensure file is a proper Blob
+          const fileBlob = await fileToBlob(idProofFile);
+          
+          // Upload with explicit retry
+          let uploadError = null;
+          let retries = 3;
+          
+          while (retries > 0) {
+            const result = await supabase.storage
+              .from("id-proofs")
+              .upload(fileName, fileBlob, { upsert: true });
+            
+            if (!result.error) {
+              uploadError = null;
+              break;
+            }
+            
+            uploadError = result.error;
+            retries--;
+            if (retries > 0) {
+              console.warn(`ID proof upload failed, retrying... (${retries} left)`, uploadError);
+              await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1s before retry
+            }
+          }
 
-        console.log("📤 Storage upload result:", { uploadError, uploadData });
+          if (uploadError) {
+            console.error("❌ ID PROOF UPLOAD FAILED after retries:", uploadError);
+          } else {
+            const { data: urlData } = supabase.storage
+              .from("id-proofs")
+              .getPublicUrl(fileName);
 
-        if (uploadError) {
-          console.error("❌ PROFILE PHOTO UPLOAD ERROR:", uploadError);
-        } else {
-          const { data: urlData } = supabase.storage
-            .from("member-avatars")
-            .getPublicUrl(fileName);
+            console.log("✅ ID PROOF UPLOADED:", { publicUrl: urlData.publicUrl });
 
-          console.log("🔗 Public URL retrieved:", { publicUrl: urlData.publicUrl });
+            const { error: updateError } = await supabase
+              .from("members")
+              .update({ id_proof_url: urlData.publicUrl })
+              .eq("id", member.id);
 
-          const { error: updateError, data: updateData } = await supabase
-            .from("members")
-            .update({ profile_image_url: urlData.publicUrl })
-            .eq("id", member.id);
-
-          console.log("💾 Database update result:", { updateError, updateData });
+            if (updateError) {
+              console.error("❌ ID PROOF URL UPDATE ERROR:", updateError);
+            } else {
+              console.log("✅ ID PROOF URL SAVED TO DATABASE");
+            }
+          }
+        } catch (err) {
+          console.error("❌ ID PROOF UPLOAD EXCEPTION:", err);
         }
       } else {
-        console.log("⚠️ photoFile is null/undefined, skipping upload");
+        console.log("⚠️ ID PROOF FILE NOT PROVIDED");
+      }
+
+      // Upload Profile Photo with retry logic
+      if (photoFile) {
+        try {
+          console.log("🔍 PROFILE PHOTO UPLOAD START:", {
+            photoFile: { name: photoFile.name, size: photoFile.size, type: photoFile.type },
+            memberId: member.id,
+          });
+
+          const ext = photoFile.name.split(".").pop();
+          const fileName = `member-${member.id}.${ext}`;
+          
+          // Ensure file is a proper Blob
+          const fileBlob = await fileToBlob(photoFile);
+
+          // Upload with explicit retry
+          let uploadError = null;
+          let retries = 3;
+          
+          while (retries > 0) {
+            const result = await supabase.storage
+              .from("member-avatars")
+              .upload(fileName, fileBlob, { upsert: true });
+            
+            if (!result.error) {
+              uploadError = null;
+              break;
+            }
+            
+            uploadError = result.error;
+            retries--;
+            if (retries > 0) {
+              console.warn(`Profile photo upload failed, retrying... (${retries} left)`, uploadError);
+              await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1s before retry
+            }
+          }
+
+          if (uploadError) {
+            console.error("❌ PROFILE PHOTO UPLOAD FAILED after retries:", uploadError);
+          } else {
+            const { data: urlData } = supabase.storage
+              .from("member-avatars")
+              .getPublicUrl(fileName);
+
+            console.log("✅ PROFILE PHOTO UPLOADED:", { publicUrl: urlData.publicUrl });
+
+            const { error: updateError } = await supabase
+              .from("members")
+              .update({ profile_image_url: urlData.publicUrl })
+              .eq("id", member.id);
+
+            if (updateError) {
+              console.error("❌ PROFILE PHOTO URL UPDATE ERROR:", updateError);
+            } else {
+              console.log("✅ PROFILE PHOTO URL SAVED TO DATABASE");
+            }
+          }
+        } catch (err) {
+          console.error("❌ PROFILE PHOTO UPLOAD EXCEPTION:", err);
+        }
+      } else {
+        console.log("⚠️ PROFILE PHOTO FILE NOT PROVIDED");
       }
 
       setSubmitted(true);

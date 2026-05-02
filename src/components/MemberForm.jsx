@@ -316,11 +316,15 @@ export default function MemberForm({
     if (!file) return;
     let nextFile = file;
 
+    console.log("📸 Photo selected:", { name: file.name, size: file.size, type: file.type });
+
     if (file.size > MAX_PHOTO_SIZE) {
       try {
+        console.log("📦 Compressing large photo...");
         nextFile = await compressImageFile(file);
+        console.log("✅ Photo compressed:", { newSize: nextFile.size });
       } catch (err) {
-        console.error("Photo compression failed:", err);
+        console.error("❌ Photo compression failed:", err);
         alert("Unable to process this photo. Please choose a different image.");
         return;
       }
@@ -334,23 +338,30 @@ export default function MemberForm({
     // Create blob URL for immediate preview (sync)
     const blobUrl = URL.createObjectURL(nextFile);
     setPhotoPreviewUrl(blobUrl);
+    
+    console.log("🔍 Setting photo file for upload", { fileName: nextFile.name, size: nextFile.size });
+    setPhotoFile(nextFile);
 
     // Also create data URL for persistence across re-renders (async)
+    // Important: Do this AFTER setPhotoFile to ensure file is stored
     const reader = new FileReader();
     reader.onload = (e) => {
       const dataUrl = e.target.result;
       // Store in sessionStorage as backup for page navigation/QR flows
       try {
         sessionStorage.setItem("photoPreview", dataUrl);
+        console.log("✅ Photo preview stored in sessionStorage");
       } catch (err) {
-        console.error("sessionStorage write failed:", err);
+        console.warn("⚠️ sessionStorage write failed:", err);
       }
       // Replace blob URL with data URL once ready
       setPhotoPreviewUrl(dataUrl);
     };
+    reader.onerror = (err) => {
+      console.error("❌ FileReader error:", err);
+    };
     reader.readAsDataURL(nextFile);
 
-    setPhotoFile(nextFile);
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
@@ -1303,6 +1314,15 @@ export default function MemberForm({
     }
 
     try {
+      // Log files being sent to onSubmit
+      console.log("📤 FORM SUBMIT - FILES BEING SENT:", {
+        hasPhotoFile: !!photoFile,
+        photoFileDetails: photoFile ? { name: photoFile.name, size: photoFile.size, type: photoFile.type } : null,
+        hasIdProofFile: !!idProofFile,
+        idProofFileDetails: idProofFile ? { name: idProofFile.name, size: idProofFile.size, type: idProofFile.type } : null,
+        isPublicMode,
+      });
+
       const saved = await onSubmit(
         payload,
         idProofFile,
@@ -1907,13 +1927,20 @@ export default function MemberForm({
                 ref={idProofInputRef}
                 onChange={(e) => {
                   const file = e.target.files?.[0];
-                  if (!file) return;
+                  if (!file) {
+                    console.log("⚠️ No ID proof file selected");
+                    return;
+                  }
+
+                  console.log("📄 ID proof selected:", { name: file.name, size: file.size, type: file.type });
 
                   if (file.size > MAX_ID_PROOF_SIZE) {
+                    console.error("❌ ID proof too large:", { size: file.size, max: MAX_ID_PROOF_SIZE });
                     alert("ID proof must be less than 20 MB");
                     return;
                   }
 
+                  console.log("✅ ID proof file accepted, setting state");
                   setIdProofFile(file);
                 }}
               />

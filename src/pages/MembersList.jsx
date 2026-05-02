@@ -24,6 +24,26 @@ export default function MembersList() {
     return `${dd}/${mm}/${yy}`;
   };
 
+  const isExpired = (dateStr) => {
+    if (!dateStr) return false;
+    const expiry = new Date(dateStr);
+    if (isNaN(expiry.getTime())) return false;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    expiry.setHours(0, 0, 0, 0);
+    return expiry < today;
+  };
+
+  const isMembershipExpired = (member) => {
+    // Check if package is expired
+    if (member.expiry_date && isExpired(member.expiry_date)) {
+      return true;
+    }
+    // Check if any add-on is expired
+    const addOns = member.add_on_items || [];
+    return addOns.some((ao) => ao.end_date && isExpired(ao.end_date));
+  };
+
   const getBillPayable = (bill) => {
     const base = Number(bill.base_amount ?? 0);
     const discount = Number(bill.discount_amount ?? 0);
@@ -719,6 +739,15 @@ export default function MembersList() {
                       <td className="px-5 py-3">
                         <div onClick={(e) => e.stopPropagation()}>
                           <div className="flex items-center gap-2">
+                            {isMembershipExpired(m) && (
+                              <button
+                                type="button"
+                                onClick={() => navigate(`/members/${m.id}/renew`)}
+                                className="px-3 py-1.5 text-xs font-semibold bg-primary text-white rounded-md hover:bg-primary/90 transition-colors"
+                              >
+                                Renew
+                              </button>
+                            )}
                             {filters.expiredOnly && (
                               <div className="relative group">
                                 <button

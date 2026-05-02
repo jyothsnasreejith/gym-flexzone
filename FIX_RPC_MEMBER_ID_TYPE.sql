@@ -1,17 +1,14 @@
--- Migration: Create RPC function to allow anon users to update member image URLs
--- This function is called from the public join flow to update profile and ID proof URLs
--- after the files are successfully uploaded to Supabase storage
--- FIXED: Accept BIGINT member_id instead of UUID (members table uses numeric IDs)
+-- IMMEDIATE FIX: Update RPC function to accept BIGINT member_id instead of UUID
+-- Run this in Supabase SQL Editor to fix the "invalid input syntax for type uuid" error
+-- Error Code 22P02 caused by members table using numeric IDs, not UUIDs
 
-BEGIN;
-
--- Drop existing function if it exists (both old UUID and new BIGINT versions)
+-- Step 1: Drop the old function with UUID parameter
 DROP FUNCTION IF EXISTS public.update_member_images(UUID, TEXT, TEXT);
+
+-- Step 2: Drop the new function with BIGINT parameter (if exists)
 DROP FUNCTION IF EXISTS public.update_member_images(BIGINT, TEXT, TEXT);
 
--- Create function to update member image URLs
--- This allows anon role to update image URLs after successful upload
--- Updated to accept BIGINT member ID (not UUID)
+-- Step 3: Create corrected function accepting BIGINT member_id
 CREATE OR REPLACE FUNCTION public.update_member_images(
   p_member_id BIGINT,
   p_profile_image_url TEXT DEFAULT NULL,
@@ -50,10 +47,13 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY INVOKER;
 
--- Grant execution permission to anon role
-GRANT EXECUTE ON FUNCTION public.update_member_images(BIGINT, TEXT, TEXT) TO anon, authenticated, service_role;
+-- Step 4: Grant execute permissions
+GRANT EXECUTE ON FUNCTION public.update_member_images(BIGINT, TEXT, TEXT) TO anon, authenticated, service_role, public;
 
--- Grant EXECUTE on the function to public (for testing)
-GRANT EXECUTE ON FUNCTION public.update_member_images(BIGINT, TEXT, TEXT) TO public;
+-- Step 5: Verify the function was created
+SELECT routine_name, routine_type
+FROM information_schema.routines
+WHERE routine_schema = 'public' 
+  AND routine_name = 'update_member_images';
 
-COMMIT;
+-- Expected output: one row with routine_name='update_member_images' and routine_type='FUNCTION'

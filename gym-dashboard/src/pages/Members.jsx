@@ -7,6 +7,7 @@ import { generateInvoice } from "../utils/generateInvoice";
 import { shareInvoice } from "../utils/communicationHelpers";
 import AssignPackageAndAddOnsModal from "../modals/AssignPackageAndAddOnsModal";
 import ProfilePhotoModal from "../modals/ProfilePhotoModal";
+import PackageDetailsDisplay from "../components/PackageDetailsDisplay";
 import { useModal } from "../context/ModalContext";
 import { isCountable } from "../utils/paymentStatus";
 
@@ -210,13 +211,23 @@ export default function Members() {
 
       // Extract package info
       if (data?.package_variants) {
+        const durationValue = data.package_variants.duration_value;
+        const durationUnit = data.package_variants.duration_unit;
+        const pricingType = data.package_variants.pricing_type;
+        
         setMemberPackage({
+          id: "current", // Unique ID for current package
           packageTitle: data.package_variants.packages?.title || "Unknown Package",
           price: data.package_variants.price,
           duration:
-            data.package_variants.pricing_type === "duration"
-              ? `${data.package_variants.duration_value} ${data.package_variants.duration_unit}`
-              : "Session based",
+            pricingType === "duration" && durationValue && durationUnit
+              ? `${durationValue} ${durationUnit}`
+              : pricingType === "session" ? "Session based" : "N/A",
+          duration_value: durationValue || null,
+          duration_unit: durationUnit || null,
+          start_date: data.joining_date, // Use joining date as start date for current package
+          end_date: data.end_date || null,
+          status: data.status || "active",
         });
       } else {
         setMemberPackage(null);
@@ -296,8 +307,10 @@ export default function Members() {
 
       const { data: ma, error: maError } = await supabase
         .from("member_add_ons")
-        .select("add_on_id, start_date, end_date")
-        .eq("member_id", id);
+        .select("add_on_id, start_date, end_date, id")
+        .eq("member_id", id)
+        .eq("is_deleted", false)
+        .order("start_date", { ascending: false });
 
       if (maError) {
         setMemberAddOns([]);
@@ -379,6 +392,7 @@ export default function Members() {
         start_date,
         end_date,
         status,
+        package_variant_id,
         packages:packages!member_packages_package_id_fkey (
           title,
           category
@@ -386,12 +400,37 @@ export default function Members() {
       `
         )
         .eq("member_id", id)
-        .order("start_date", { ascending: false });
+        .eq("is_deleted", false)
+        .order("end_date", { ascending: false });
 
       if (error) {
         console.error("Package history load error:", error);
+        setPackageHistory([]);
       } else {
-        setPackageHistory(data || []);
+        // Fetch variant data for packages that have variant_id
+        const variantIds = (data || [])
+          .filter((pkg) => pkg.package_variant_id)
+          .map((pkg) => pkg.package_variant_id);
+
+        if (variantIds.length > 0) {
+          const { data: variants, error: variantError } = await supabase
+            .from("package_variants")
+            .select("id, duration_value, duration_unit")
+            .in("id", variantIds);
+
+          if (!variantError && variants) {
+            const variantMap = new Map(variants.map((v) => [v.id, v]));
+            const enrichedData = (data || []).map((pkg) => ({
+              ...pkg,
+              package_variants: variantMap.get(pkg.package_variant_id),
+            }));
+            setPackageHistory(enrichedData);
+          } else {
+            setPackageHistory(data || []);
+          }
+        } else {
+          setPackageHistory(data || []);
+        }
       }
     };
 
@@ -858,6 +897,15 @@ export default function Members() {
             </div>
           </button>
         </div>
+
+        {/* ===== PACKAGE DETAILS SECTION ===== */}
+        <PackageDetailsDisplay
+          memberId={id}
+          packageHistory={packageHistory}
+          addOnHistory={memberAddOns}
+          currentPackage={memberPackage}
+          onUpdate={loadMember}
+        />
 
         {/* ===== BENTO GRID CONTENT ===== */}
         <div className="grid grid-cols-12 gap-6">

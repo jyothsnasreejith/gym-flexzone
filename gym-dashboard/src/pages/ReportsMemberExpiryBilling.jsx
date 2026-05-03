@@ -65,29 +65,121 @@ export default function ReportsMemberExpiryBilling() {
 
         if (membersErr) throw membersErr;
 
-        // Fetch all bills to get latest bill date per member
+        // Fetch all bills with package variant info
         const { data: billsData, error: billsErr } = await supabase
           .from("bills")
-          .select("id, member_id, billing_date, due_date")
+          .select(
+            `id, 
+            member_id, 
+            billing_date, 
+            due_date, 
+            notes,
+            package_variant_id`
+          )
           .order("billing_date", { ascending: false });
 
         if (billsErr) throw billsErr;
 
-        // Create a map of latest bill date per member
+        // Fetch member add-ons with add-ons info
+        const { data: memberAddOnsData, error: addOnsErr } = await supabase
+          .from("member_add_ons")
+          .select(
+            `id, 
+            member_id, 
+            add_on_id, 
+            start_date, 
+            end_date, 
+            add_ons!inner(id, name, duration_unit, duration_value)`
+          );
+
+        if (addOnsErr) throw addOnsErr;
+
+        // Fetch all package variants
+        const { data: variantsData, error: variantsErr } = await supabase
+          .from("package_variants")
+          .select("id, package_id, duration_unit, duration_value");
+
+        if (variantsErr) throw variantsErr;
+
+        // Fetch all packages
+        const { data: packagesData, error: packagesErr } = await supabase
+          .from("packages")
+          .select("id, title");
+
+        if (packagesErr) throw packagesErr;
+
+        // Build lookup maps
+        const variantMap = new Map();
+        (variantsData || []).forEach((v) => {
+          variantMap.set(v.id, {
+            package_id: v.package_id,
+            duration_unit: v.duration_unit,
+            duration_value: v.duration_value,
+          });
+        });
+
+        const packageNameMap = new Map();
+        (packagesData || []).forEach((p) => {
+          packageNameMap.set(p.id, p.title);
+        });
+
+        // Create a map of latest bill date and package per member
         const latestBillMap = new Map();
+        const packageMap = new Map();
         (billsData || []).forEach((bill) => {
           if (!latestBillMap.has(bill.member_id)) {
             latestBillMap.set(bill.member_id, bill.billing_date);
+            
+            // Get package info from package_variant_id
+            if (bill.package_variant_id) {
+              const variant = variantMap.get(bill.package_variant_id);
+              if (variant) {
+                const pkgName = packageNameMap.get(variant.package_id) || "—";
+                packageMap.set(bill.member_id, {
+                  name: pkgName,
+                  duration_value: variant.duration_value,
+                  duration_unit: variant.duration_unit,
+                });
+              }
+            }
+          }
+        });
+
+        // Create map of active add-ons per member
+        const memberAddOnsMap = new Map();
+        (memberAddOnsData || []).forEach((ao) => {
+          if (!isExpired(ao.end_date)) {
+            if (!memberAddOnsMap.has(ao.member_id)) {
+              memberAddOnsMap.set(ao.member_id, []);
+            }
+            memberAddOnsMap.get(ao.member_id).push({
+              name: ao.add_ons?.name || "—",
+              duration_value: ao.add_ons?.duration_value || "—",
+              duration_unit: ao.add_ons?.duration_unit || "—",
+            });
           }
         });
 
         // Merge data
-        const merged = (membersData || []).map((m) => ({
-          ...m,
-          expiry_date: m.end_date,
-          latest_bill_date: latestBillMap.get(m.id) || null,
-          days_expired: daysSinceExpiry(m.end_date),
-        }));
+        const merged = (membersData || []).map((m) => {
+          const pkgInfo = packageMap.get(m.id) || {
+            name: "—",
+            duration_value: "—",
+            duration_unit: "—",
+          };
+          return {
+            ...m,
+            expiry_date: m.end_date,
+            latest_bill_date: latestBillMap.get(m.id) || null,
+            days_expired: daysSinceExpiry(m.end_date),
+            package_name: pkgInfo.name,
+            package_duration: {
+              duration_value: pkgInfo.duration_value,
+              duration_unit: pkgInfo.duration_unit,
+            },
+            active_addons: memberAddOnsMap.get(m.id) || [],
+          };
+        });
 
         setRows(merged);
       } catch (err) {
@@ -130,6 +222,9 @@ export default function ReportsMemberExpiryBilling() {
       "Joining Date",
       "Expiry Date",
       "Days Expired",
+      "Package",
+      "Duration",
+      "Active Add-ons",
       "Latest Bill Date",
       "Status",
     ];
@@ -141,6 +236,15 @@ export default function ReportsMemberExpiryBilling() {
       "Joining Date": formatDate(m.joining_date),
       "Expiry Date": formatDate(m.expiry_date),
       "Days Expired": m.days_expired !== null ? m.days_expired : "—",
+      Package: m.package_name || "—",
+      Duration: m.package_duration && m.package_duration.duration_value !== "—" 
+        ? `${m.package_duration.duration_value} ${m.package_duration.duration_unit}`
+        : "—",
+      "Active Add-ons": m.active_addons && m.active_addons.length > 0
+        ? m.active_addons
+            .map((ao) => `${ao.name} (${ao.duration_value} ${ao.duration_unit})`)
+            .join("; ")
+        : "—",
       "Latest Bill Date": formatDate(m.latest_bill_date),
       Status: isExpired(m.expiry_date) ? "Expired" : "Active",
     }));
@@ -232,6 +336,15 @@ export default function ReportsMemberExpiryBilling() {
                     Days Expired
                   </th>
                   <th className="px-6 py-4 text-xs font-bold text-secondary uppercase tracking-wider">
+                    Package
+                  </th>
+                  <th className="px-6 py-4 text-xs font-bold text-secondary uppercase tracking-wider">
+                    Duration
+                  </th>
+                  <th className="px-6 py-4 text-xs font-bold text-secondary uppercase tracking-wider">
+                    Active Add-ons
+                  </th>
+                  <th className="px-6 py-4 text-xs font-bold text-secondary uppercase tracking-wider">
                     Latest Bill Date
                   </th>
                   <th className="px-6 py-4 text-xs font-bold text-secondary uppercase tracking-wider">
@@ -242,7 +355,7 @@ export default function ReportsMemberExpiryBilling() {
               <tbody className="divide-y divide-secondary-blue/20">
                 {filtered.length === 0 ? (
                   <tr>
-                    <td colSpan={8} className="px-6 py-8 text-center text-secondary">
+                    <td colSpan={11} className="px-6 py-8 text-center text-secondary">
                       {rows.length === 0 ? "No members found" : "No results matching filter"}
                     </td>
                   </tr>
@@ -262,6 +375,19 @@ export default function ReportsMemberExpiryBilling() {
                         ) : (
                           <span className="text-emerald-400">Active</span>
                         )}
+                      </td>
+                      <td className="px-6 py-4 text-secondary">{member.package_name || "—"}</td>
+                      <td className="px-6 py-4 text-secondary">
+                        {member.package_duration && member.package_duration.duration_value !== "—"
+                          ? `${member.package_duration.duration_value} ${member.package_duration.duration_unit}`
+                          : "—"}
+                      </td>
+                      <td className="px-6 py-4 text-secondary text-xs">
+                        {member.active_addons && member.active_addons.length > 0
+                          ? member.active_addons
+                              .map((ao) => `${ao.name} (${ao.duration_value} ${ao.duration_unit})`)
+                              .join("; ")
+                          : "—"}
                       </td>
                       <td className="px-6 py-4 text-secondary">{formatDate(member.latest_bill_date)}</td>
                       <td className="px-6 py-4">

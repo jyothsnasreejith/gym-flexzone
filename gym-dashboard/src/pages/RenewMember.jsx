@@ -158,12 +158,14 @@ export default function RenewMember() {
       const existingIds = new Set((mao || []).map((r) => String(r.add_on_id)));
       setSelectedAddOnIds(existingIds);
 
-      // Pre-fill add-on dates with fresh dates from today
+      // Pre-fill add-on dates with fresh dates from previous end_date (renewal logic)
+      // For renewals: start_date is previous package's end_date, not today
+      const renewalBaseDate = m.end_date || today();
       const initDates = {};
       for (const row of mao || []) {
         initDates[String(row.add_on_id)] = {
-          start_date: today(),
-          end_date: row.end_date || today(),
+          start_date: renewalBaseDate,
+          end_date: row.end_date || renewalBaseDate,
         };
       }
       setAddOnDates(initDates);
@@ -190,11 +192,12 @@ export default function RenewMember() {
       setAllAddOns(aos || []);
 
       // Refresh add-on end dates now that we have addon metadata
+      // For renewals: start_date is previous end_date, calculate new end_date from there
       const refreshedDates = {};
       for (const row of mao || []) {
         const ao = (aos || []).find((a) => String(a.id) === String(row.add_on_id));
-        const start = today();
-        const end = ao ? calcAddOnEndDate(start, ao) : (row.end_date || today());
+        const start = renewalBaseDate;
+        const end = ao ? calcAddOnEndDate(start, ao) : (row.end_date || renewalBaseDate);
         refreshedDates[String(row.add_on_id)] = { start_date: start, end_date: end };
       }
       setAddOnDates(refreshedDates);
@@ -208,6 +211,7 @@ export default function RenewMember() {
   // ─── TOGGLE ADD-ON ────────────────────────────────────────────────────────────
   const toggleAddOn = (addonId, addonMeta) => {
     const key = String(addonId);
+    const baseDate = member?.end_date || today(); // For renewals, use previous end_date
     setSelectedAddOnIds((prev) => {
       const next = new Set(prev);
       if (next.has(key)) {
@@ -215,7 +219,7 @@ export default function RenewMember() {
         setAddOnDates((d) => { const { [key]: _, ...rest } = d; return rest; });
       } else {
         next.add(key);
-        const start = today();
+        const start = baseDate;
         const end = calcAddOnEndDate(start, addonMeta);
         setAddOnDates((d) => ({ ...d, [key]: { start_date: start, end_date: end } }));
       }
@@ -280,11 +284,12 @@ export default function RenewMember() {
       if (memberErr) throw new Error("Failed to update member: " + memberErr.message);
 
       // 3. Assign to member_packages via RPC (same as EditMember)
+      // RENEWAL: start_date is previous package's end_date, not today
       if (newVariantId) {
         const { error: assignError } = await supabase.rpc("assign_member_package", {
           p_member_id: memberId,
           p_package_variant_id: newVariantId,
-          p_start_date: todayStr,
+          p_start_date: member?.end_date || todayStr,
         });
         if (assignError) {
           console.error("assign_member_package error:", assignError);

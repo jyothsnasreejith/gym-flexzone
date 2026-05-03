@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "../supabaseClient";
 import BatchSlotEditor from "./BatchSlotEditor";
 import UpiPaymentPanel from "./UpiPaymentPanel";
+import PackageHistoryModal from "./PackageHistoryModal";
 
 // NOTE: Removed console logging of Supabase credentials.
 
@@ -176,6 +177,7 @@ export default function MemberForm({
   const [expandedDependents, setExpandedDependents] = useState({});
   const [dependentError, setDependentError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [packageHistoryModalOpen, setPackageHistoryModalOpen] = useState(false);
   // Stores { [add_on_id]: { start_date: 'YYYY-MM-DD', end_date: 'YYYY-MM-DD' } }
   const [addOnDates, setAddOnDates] = useState({});
   // Referral
@@ -1805,27 +1807,43 @@ export default function MemberForm({
 
           {packageHistory.length > 0 && (
             <div className="mt-6 rounded-lg border border-primary/30 bg-card p-4">
-              <h3 className="text-sm font-semibold text-primary mb-3">
-                Package History
-              </h3>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-sm font-semibold text-primary flex items-center gap-2">
+                  <span className="material-icons-round text-[18px]">history</span>
+                  Package History
+                </h3>
+                <button
+                  type="button"
+                  onClick={() => setPackageHistoryModalOpen(true)}
+                  className="px-3 py-1 text-sm bg-primary hover:bg-blue-700 text-white rounded-lg flex items-center gap-1 transition"
+                >
+                  <span className="material-icons-round text-[16px]">edit</span>
+                  View & Edit
+                </button>
+              </div>
 
               <div className="space-y-2">
-                {packageHistory.map((p) => (
+                {packageHistory.slice(0, 3).map((p) => (
                   <div
                     key={p.id}
-                    className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 text-sm text-white bg-card px-3 py-2 rounded-md border border-slate-700/20"
+                    className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 text-sm text-white bg-slate-700/30 px-3 py-2 rounded-md border border-slate-700/20"
                   >
                     <span className="font-medium text-white">
                       {p.packages?.title || "—"}
                     </span>
 
-                    <span className="text-xs text-white sm:text-sm">
+                    <span className="text-xs text-gray-300 sm:text-sm">
                       {p.start_date}
                       {" → "}
                       {p.end_date || "Present"}
                     </span>
                   </div>
                 ))}
+                {packageHistory.length > 3 && (
+                  <div className="text-xs text-gray-400 mt-2 pt-2 border-t border-slate-700/30">
+                    + {packageHistory.length - 3} more entries
+                  </div>
+                )}
               </div>
             </div>
           )}
@@ -2539,6 +2557,16 @@ export default function MemberForm({
       >
         {submitLabel}
       </button>
+
+      {/* Package History Modal */}
+      <PackageHistoryModal
+        memberId={initialData?.id}
+        isOpen={packageHistoryModalOpen}
+        onClose={() => setPackageHistoryModalOpen(false)}
+        onUpdate={() => {
+          // Optionally refresh data here if needed
+        }}
+      />
     </form>
   );
 }

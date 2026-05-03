@@ -83,8 +83,8 @@ export default function RenewMember() {
   }, [packages, selectedVariantId]);
 
   const newEndDate = useMemo(
-    () => (selectedVariant ? calcEndDate(today(), selectedVariant) : null),
-    [selectedVariant]
+    () => (selectedVariant ? calcEndDate(member?.end_date || today(), selectedVariant) : null),
+    [selectedVariant, member?.end_date]
   );
 
   const packageDurationLabel = useMemo(() => {
@@ -249,10 +249,12 @@ export default function RenewMember() {
         .eq("member_id", memberId)
         .eq("is_current", true);
 
-      // 1. Recalculate end_date
+      // 1. Recalculate end_date from original expiry (member.end_date), not from today
+      // This way, late payments extend from the original expiry date, not the payment date
       let endDate = null;
       if (selectedVariant && selectedVariant.pricing_type === "duration") {
-        endDate = calcEndDate(todayStr, selectedVariant);
+        const baseDate = member?.end_date || todayStr;
+        endDate = calcEndDate(baseDate, selectedVariant);
       }
 
       // 1.1 Calculate max end_date across package and all add-ons

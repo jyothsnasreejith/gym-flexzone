@@ -27,6 +27,7 @@ import Offers from "./pages/Offers";
 import Reports from "./pages/Reports";
 import ReportsCollection from "./pages/ReportsCollection";
 import ReportsMembers from "./pages/ReportsMembers";
+import ReportsMemberExpiryBilling from "./pages/ReportsMemberExpiryBilling";
 import ReportsExpired from "./pages/ReportsExpired";
 import ReportsProfitLoss from "./pages/ReportsProfitLoss";
 import ReportsMemberCollection from "./pages/ReportsMemberCollection";
@@ -308,8 +309,14 @@ const App = () => {
               </ProtectedRoute>
             }
           />
-          <Route
-            path="/reports/expired"
+          <Route            path="/reports/member-expiry-billing"
+            element={
+              <ProtectedRoute>
+                <ReportsMemberExpiryBilling />
+              </ProtectedRoute>
+            }
+          />
+          <Route            path="/reports/expired"
             element={
               <ProtectedRoute allow={["admin"]}>
                 <ReportsExpired />

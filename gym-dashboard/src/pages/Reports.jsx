@@ -18,6 +18,14 @@ const cards = [
     path: "/reports/members",
   },
   {
+    title: "Member Expiry & Billing",
+    subtitle: "Join date, expiry date, and bill dates",
+    icon: "calendar_month",
+    tone: "from-primary-blue to-navy border-purple-100",
+    iconTone: "bg-purple-100 text-purple-600",
+    path: "/reports/member-expiry-billing",
+  },
+  {
     title: "Expired Members",
     subtitle: "Members expired before today",
     icon: "event_busy",

@@ -2,10 +2,12 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../supabaseClient";
 import LocationSettings from "../components/settings/LocationSettings";
+import DatabaseBackupSettings from "../components/settings/DatabaseBackupSettings";
 import { useToast } from "../context/ToastContext";
 
 const TABS = {
   ATTENDANCE_CONFIG: "attendance_config",
+  DATABASE_BACKUP: "database_backup",
 };
 
 export default function SystemSettings() {
@@ -37,8 +39,33 @@ export default function SystemSettings() {
         </div>
       </div>
 
+      {/* TAB NAVIGATION */}
+      <div className="flex gap-2 mb-6 border-b border-gray-700">
+        <button
+          onClick={() => setActiveTab(TABS.ATTENDANCE_CONFIG)}
+          className={`px-4 py-2 font-medium transition-colors ${
+            activeTab === TABS.ATTENDANCE_CONFIG
+              ? "text-primary border-b-2 border-primary"
+              : "text-secondary hover:text-white"
+          }`}
+        >
+          Settings
+        </button>
+        <button
+          onClick={() => setActiveTab(TABS.DATABASE_BACKUP)}
+          className={`px-4 py-2 font-medium transition-colors ${
+            activeTab === TABS.DATABASE_BACKUP
+              ? "text-primary border-b-2 border-primary"
+              : "text-secondary hover:text-white"
+          }`}
+        >
+          Database Backup
+        </button>
+      </div>
+
       {/* CONTENT */}
       {activeTab === TABS.ATTENDANCE_CONFIG && <AttendanceConfigView />}
+      {activeTab === TABS.DATABASE_BACKUP && <DatabaseBackupSettings />}
     </div>
   );
 }

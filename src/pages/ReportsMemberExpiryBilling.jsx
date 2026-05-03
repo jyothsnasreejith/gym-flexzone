@@ -123,6 +123,17 @@ export default function ReportsMemberExpiryBilling() {
       return;
     }
 
+    const headers = [
+      "Admission No",
+      "Member Name",
+      "Phone",
+      "Joining Date",
+      "Expiry Date",
+      "Days Expired",
+      "Latest Bill Date",
+      "Status",
+    ];
+
     const csvData = filtered.map((m) => ({
       "Admission No": m.admission_no || "—",
       "Member Name": m.full_name || "—",
@@ -135,8 +146,9 @@ export default function ReportsMemberExpiryBilling() {
     }));
 
     downloadCsv(
-      csvData,
-      `member-expiry-billing-report-${formatDateOnly(new Date().toISOString())}.csv`
+      `member-expiry-billing-report-${formatDateOnly(new Date().toISOString())}.csv`,
+      headers,
+      csvData
     );
   };
 
